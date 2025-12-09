@@ -76,12 +76,6 @@ export const MINIPROGRAM_EVENT_MAP = {
         detail: '获取最近阅读书籍',
         icon: '📖',
     },
-    '/api.miniprogram.v1.Bookshelf/GetBookshelfRecords': {
-        desc: '书架记录',
-        category: 'read',
-        detail: '获取书架记录',
-        icon: '📚',
-    },
     '/api.miniprogram.v1.Book/UnlockBookIaa': {
         desc: 'IAA解锁书籍',
         category: 'ad',
@@ -155,6 +149,12 @@ export const MINIPROGRAM_EVENT_MAP = {
         desc: '获取书籍列表',
         category: 'custom',
         detail: '获取书籍列表数据',
+        icon: '📚',
+    },
+    '/api.miniprogram.v1.Bookshelf/GetBookshelfRecords': {
+        desc: '书架记录',
+        category: 'custom',
+        detail: '获取书架记录',
         icon: '📚',
     },
     '/api.miniprogram.v1.Report/GetServerTime': {
