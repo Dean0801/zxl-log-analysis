@@ -313,15 +313,17 @@ export function parseMiniprogramData(jsonData) {
             const properties = {
                 // 基础信息
                 level: level || undefined,
+                code: lineData.code,
+                reason: lineData.reason,
+                stack: lineData.stack,
+                userAgent: lineData.userAgent,
+                latency: lineData.latency,
                 traceId: lineData.traceId,
                 spanId: lineData.spanId,
                 serviceId: lineData.serviceId,
                 serviceName: lineData.serviceName,
                 serviceVersion: lineData.serviceVersion,
                 ip: lineData.ip,
-                code: lineData.code,
-                reason: lineData.reason,
-                latency: lineData.latency,
                 // 用户信息
                 userId: user.id,
                 openId: user.openId,
