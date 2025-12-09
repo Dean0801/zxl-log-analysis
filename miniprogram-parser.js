@@ -12,7 +12,7 @@ export const MINIPROGRAM_EVENT_MAP = {
         desc: '用户登录',
         category: 'system',
         detail: '用户登录小程序',
-        icon: '🔐',
+        icon: '👤',
     },
     '/api.miniprogram.v1.Auth/GetUserInfo': {
         desc: '获取用户信息',
@@ -26,7 +26,7 @@ export const MINIPROGRAM_EVENT_MAP = {
         desc: '获取书籍信息',
         category: 'read',
         detail: '获取书籍详情信息',
-        icon: '📚',
+        icon: '📖',
     },
     '/api.miniprogram.v1.Book/GetChapterList': {
         desc: '获取章节列表',
@@ -39,6 +39,48 @@ export const MINIPROGRAM_EVENT_MAP = {
         category: 'read',
         detail: '获取章节的文字内容',
         icon: '📖',
+    },
+    '/api.miniprogram.v1.Book/SetReadProgress': {
+        desc: '设置阅读进度',
+        category: 'read',
+        detail: '设置用户阅读进度',
+        icon: '📖',
+    },
+    '/api.miniprogram.v1.Book/GetBookChapter': {
+        desc: '获取章节',
+        category: 'read',
+        detail: '获取书籍章节详情',
+        icon: '📖',
+    },
+    '/api.miniprogram.v1.Book/GetBook': {
+        desc: '获取书籍',
+        category: 'read',
+        detail: '获取书籍详情',
+        icon: '📖',
+    },
+    '/api.miniprogram.v1.Bookshop/ListRecommendedBooks': {
+        desc: '获取推荐书籍',
+        category: 'read',
+        detail: '获取推荐书籍列表',
+        icon: '📖',
+    },
+    '/api.miniprogram.v1.Bookshop/ListMoreBooks': {
+        desc: '首页书籍列表',
+        category: 'read',
+        detail: '获取首页书籍列表',
+        icon: '📖',
+    },
+    '/api.miniprogram.v1.Bookshop/GetRecentlyReadBook': {
+        desc: '最近阅读',
+        category: 'read',
+        detail: '获取最近阅读书籍',
+        icon: '📖',
+    },
+    '/api.miniprogram.v1.Bookshelf/GetBookshelfRecords': {
+        desc: '书架记录',
+        category: 'read',
+        detail: '获取书架记录',
+        icon: '📚',
     },
     '/api.miniprogram.v1.Book/UnlockBookIaa': {
         desc: 'IAA解锁书籍',
@@ -115,6 +157,12 @@ export const MINIPROGRAM_EVENT_MAP = {
         detail: '获取书籍列表数据',
         icon: '📚',
     },
+    '/api.miniprogram.v1.Report/GetServerTime': {
+        desc: '服务器时间',
+        category: 'system',
+        detail: '获取服务器时间来校准客户端时间',
+        icon: '🕒',
+    },
 
     // ========== 搜索相关 ==========
     '/api.miniprogram.v1.Search/SearchBook': {
@@ -182,6 +230,12 @@ export const EVENT_NAME_MAP = {
         detail: '用户开始观看激励视频广告',
         icon: '▶️',
     },
+    'user_register': {
+        desc: '用户注册',
+        category: 'system',
+        detail: '用户注册事件',
+        icon: '👤',
+    },
     'ad_watch_end': {
         desc: '广告观看结束',
         category: 'ad',
@@ -199,6 +253,12 @@ export const EVENT_NAME_MAP = {
         category: 'system',
         detail: '用户登录事件',
         icon: '🔐',
+    },
+    'analysis_generic': {
+        desc: '上报分析数据',
+        category: 'custom',
+        detail: '上报分析数据',
+        icon: '📈',
     },
 }
 
