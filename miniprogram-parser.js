@@ -569,6 +569,69 @@ export function getMiniprogramEventDetail(item) {
         </div>`)
     }
 
+    // 设备信息分组 - 放在用户信息之后，优先展示
+    let hasDeviceInfo = false
+    const deviceInfoDetails = []
+
+    // 优先从 userAttributes 获取设备信息，fallback 到 properties
+    const userAttributes = raw.args?.userAttributes || {}
+    const getDeviceInfo = (field) => userAttributes[field] || props[field]
+
+    // 设备品牌和型号
+    const deviceManufacturer = getDeviceInfo('deviceManufacturer')
+    const deviceModel = getDeviceInfo('deviceModel')
+    if (deviceManufacturer || deviceModel) {
+        deviceInfoDetails.push(`<div class="pay-detail-item">
+            <span class="pay-detail-icon">📱</span>
+            <span class="pay-detail-label">设备型号:</span>
+            <span class="pay-detail-value">${deviceManufacturer || 'Unknown'} ${deviceModel || ''}</span>
+        </div>`)
+        hasDeviceInfo = true
+    }
+
+    // 操作系统信息
+    const os = getDeviceInfo('os')
+    const osVersion = getDeviceInfo('osVersion')
+    if (os) {
+        const versionStr = osVersion ? ` ${osVersion}` : ''
+        deviceInfoDetails.push(`<div class="pay-detail-item">
+            <span class="pay-detail-icon">💻</span>
+            <span class="pay-detail-label">操作系统:</span>
+            <span class="pay-detail-value">${os}${versionStr}</span>
+        </div>`)
+        hasDeviceInfo = true
+    }
+
+    // 浏览器信息
+    const browser = getDeviceInfo('browser')
+    const browserVersion = getDeviceInfo('browserVersion')
+    if (browser) {
+        const versionStr = browserVersion ? ` ${browserVersion}` : ''
+        deviceInfoDetails.push(`<div class="pay-detail-item">
+            <span class="pay-detail-icon">🌐</span>
+            <span class="pay-detail-label">浏览器:</span>
+            <span class="pay-detail-value">${browser}${versionStr}</span>
+        </div>`)
+        hasDeviceInfo = true
+    }
+
+    // 网络信息
+    const networkType = getDeviceInfo('networkType')
+    if (networkType) {
+        deviceInfoDetails.push(`<div class="pay-detail-item">
+            <span class="pay-detail-icon">📶</span>
+            <span class="pay-detail-label">网络类型:</span>
+            <span class="pay-detail-value">${networkType}</span>
+        </div>`)
+        hasDeviceInfo = true
+    }
+
+    // 如果有设备信息，则添加设备信息分组标题和内容
+    if (hasDeviceInfo) {
+        details.push('<div class="device-info-header" style="margin: 12px 0 8px 0; padding: 4px 8px; background: rgba(33, 150, 243, 0.1); border-radius: 4px; font-size: 12px; font-weight: bold; color: #2196f3;">📱 设备信息</div>')
+        details.push(...deviceInfoDetails)
+    }
+
     // 小程序启动路径（针对 user_login 事件）
     if (item.event === 'user_login') {
         const launchPath =
@@ -711,69 +774,6 @@ export function getMiniprogramEventDetail(item) {
             <span class="pay-detail-label">阅读进度:</span>
             <span class="pay-detail-value">${props.readProgress}%</span>
         </div>`)
-    }
-
-    // 设备信息分组
-    let hasDeviceInfo = false
-    const deviceInfoDetails = []
-
-    // 优先从 userAttributes 获取设备信息，fallback 到 properties
-    const userAttributes = raw.args?.userAttributes || {}
-    const getDeviceInfo = (field) => userAttributes[field] || props[field]
-
-    // 设备品牌和型号
-    const deviceManufacturer = getDeviceInfo('deviceManufacturer')
-    const deviceModel = getDeviceInfo('deviceModel')
-    if (deviceManufacturer || deviceModel) {
-        deviceInfoDetails.push(`<div class="pay-detail-item">
-            <span class="pay-detail-icon">📱</span>
-            <span class="pay-detail-label">设备型号:</span>
-            <span class="pay-detail-value">${deviceManufacturer || 'Unknown'} ${deviceModel || ''}</span>
-        </div>`)
-        hasDeviceInfo = true
-    }
-
-    // 操作系统信息
-    const os = getDeviceInfo('os')
-    const osVersion = getDeviceInfo('osVersion')
-    if (os) {
-        const versionStr = osVersion ? ` ${osVersion}` : ''
-        deviceInfoDetails.push(`<div class="pay-detail-item">
-            <span class="pay-detail-icon">💻</span>
-            <span class="pay-detail-label">操作系统:</span>
-            <span class="pay-detail-value">${os}${versionStr}</span>
-        </div>`)
-        hasDeviceInfo = true
-    }
-
-    // 浏览器信息
-    const browser = getDeviceInfo('browser')
-    const browserVersion = getDeviceInfo('browserVersion')
-    if (browser) {
-        const versionStr = browserVersion ? ` ${browserVersion}` : ''
-        deviceInfoDetails.push(`<div class="pay-detail-item">
-            <span class="pay-detail-icon">🌐</span>
-            <span class="pay-detail-label">浏览器:</span>
-            <span class="pay-detail-value">${browser}${versionStr}</span>
-        </div>`)
-        hasDeviceInfo = true
-    }
-
-    // 网络信息
-    const networkType = getDeviceInfo('networkType')
-    if (networkType) {
-        deviceInfoDetails.push(`<div class="pay-detail-item">
-            <span class="pay-detail-icon">📶</span>
-            <span class="pay-detail-label">网络类型:</span>
-            <span class="pay-detail-value">${networkType}</span>
-        </div>`)
-        hasDeviceInfo = true
-    }
-
-    // 如果有设备信息，则添加设备信息分组标题和内容
-    if (hasDeviceInfo) {
-        details.push('<div class="device-info-header" style="margin: 12px 0 8px 0; padding: 4px 8px; background: rgba(33, 150, 243, 0.1); border-radius: 4px; font-size: 12px; font-weight: bold; color: #2196f3;">📱 设备信息</div>')
-        details.push(...deviceInfoDetails)
     }
 
     // 响应信息
