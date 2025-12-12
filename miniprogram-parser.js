@@ -497,6 +497,69 @@ export function getMiniprogramEventDetail(item) {
         return JSON.stringify(val, null, 2)
     }
 
+    // ERROR级别记录的特殊处理
+    if (item.level === 'ERROR') {
+        // 错误代码和原因
+        if (props.code !== undefined) {
+            const codeClass = props.code >= 400 && props.code < 500 ? 'pay-error' :
+                             props.code >= 500 ? 'pay-error' : ''
+            details.push(`<div class="pay-detail-item pay-error-code">
+                <span class="pay-detail-icon">🔴</span>
+                <span class="pay-detail-label">错误代码:</span>
+                <span class="pay-detail-value ${codeClass}"><strong>${props.code}</strong></span>
+            </div>`)
+        }
+
+        if (props.reason) {
+            details.push(`<div class="pay-detail-item">
+                <span class="pay-detail-icon">📋</span>
+                <span class="pay-detail-label">错误原因:</span>
+                <span class="pay-detail-value">${encodeHtml(props.reason)}</span>
+            </div>`)
+        }
+
+        // 错误堆栈信息
+        if (props.stack) {
+            const stackText = encodeHtml(props.stack)
+            details.push(`<div class="pay-detail-item">
+                <span class="pay-detail-icon">📄</span>
+                <span class="pay-detail-label">错误堆栈:</span>
+                <span class="pay-detail-value">
+                    <pre style="white-space: pre-wrap; margin: 0; font-size: 12px; max-height: 200px; overflow-y: auto;">${stackText}</pre>
+                    <button class="copy-btn" data-copy="${encodeURIComponent(props.stack)}" onclick="copyData(this)">复制</button>
+                </span>
+            </div>`)
+        }
+
+        // 失败原因详情（从analysisData中提取）
+        const failReason = raw.analysisData?.fail_reason || props.fail_reason
+        if (failReason) {
+            const frText = encodeHtml(failReason)
+            details.push(`<div class="pay-detail-item">
+                <span class="pay-detail-icon">⚠️</span>
+                <span class="pay-detail-label">失败详情:</span>
+                <span class="pay-detail-value">
+                    <pre style="white-space: pre-wrap; margin: 0; font-size: 12px; max-height: 150px; overflow-y: auto;">${frText}</pre>
+                    <button class="copy-btn" data-copy="${encodeURIComponent(failReason)}" onclick="copyData(this)">复制</button>
+                </span>
+            </div>`)
+        }
+
+        // 请求延迟信息（针对API错误）
+        if (props.latency) {
+            details.push(`<div class="pay-detail-item">
+                <span class="pay-detail-icon">⏱️</span>
+                <span class="pay-detail-label">请求耗时:</span>
+                <span class="pay-detail-value">${(props.latency * 1000).toFixed(2)}ms</span>
+            </div>`)
+        }
+
+        // 添加分隔线
+        if (details.length > 0) {
+            details.push('<hr style="margin: 12px 0; border: none; border-top: 1px solid rgba(255,255,255,0.1);">')
+        }
+    }
+
     // 用户信息
     if (props.userId || props.openId) {
         details.push(`<div class="pay-detail-item">
@@ -650,30 +713,67 @@ export function getMiniprogramEventDetail(item) {
         </div>`)
     }
 
-    // 设备信息
-    if (props.deviceModel) {
-        details.push(`<div class="pay-detail-item">
+    // 设备信息分组
+    let hasDeviceInfo = false
+    const deviceInfoDetails = []
+
+    // 优先从 userAttributes 获取设备信息，fallback 到 properties
+    const userAttributes = raw.args?.userAttributes || {}
+    const getDeviceInfo = (field) => userAttributes[field] || props[field]
+
+    // 设备品牌和型号
+    const deviceManufacturer = getDeviceInfo('deviceManufacturer')
+    const deviceModel = getDeviceInfo('deviceModel')
+    if (deviceManufacturer || deviceModel) {
+        deviceInfoDetails.push(`<div class="pay-detail-item">
             <span class="pay-detail-icon">📱</span>
-            <span class="pay-detail-label">设备:</span>
-            <span class="pay-detail-value">${props.deviceManufacturer || ''} ${props.deviceModel}</span>
+            <span class="pay-detail-label">设备型号:</span>
+            <span class="pay-detail-value">${deviceManufacturer || 'Unknown'} ${deviceModel || ''}</span>
         </div>`)
+        hasDeviceInfo = true
     }
 
-    if (props.os) {
-        details.push(`<div class="pay-detail-item">
+    // 操作系统信息
+    const os = getDeviceInfo('os')
+    const osVersion = getDeviceInfo('osVersion')
+    if (os) {
+        const versionStr = osVersion ? ` ${osVersion}` : ''
+        deviceInfoDetails.push(`<div class="pay-detail-item">
             <span class="pay-detail-icon">💻</span>
-            <span class="pay-detail-label">系统:</span>
-            <span class="pay-detail-value">${props.os} ${props.osVersion || ''}</span>
+            <span class="pay-detail-label">操作系统:</span>
+            <span class="pay-detail-value">${os}${versionStr}</span>
         </div>`)
+        hasDeviceInfo = true
+    }
+
+    // 浏览器信息
+    const browser = getDeviceInfo('browser')
+    const browserVersion = getDeviceInfo('browserVersion')
+    if (browser) {
+        const versionStr = browserVersion ? ` ${browserVersion}` : ''
+        deviceInfoDetails.push(`<div class="pay-detail-item">
+            <span class="pay-detail-icon">🌐</span>
+            <span class="pay-detail-label">浏览器:</span>
+            <span class="pay-detail-value">${browser}${versionStr}</span>
+        </div>`)
+        hasDeviceInfo = true
     }
 
     // 网络信息
-    if (props.networkType) {
-        details.push(`<div class="pay-detail-item">
+    const networkType = getDeviceInfo('networkType')
+    if (networkType) {
+        deviceInfoDetails.push(`<div class="pay-detail-item">
             <span class="pay-detail-icon">📶</span>
-            <span class="pay-detail-label">网络:</span>
-            <span class="pay-detail-value">${props.networkType}</span>
+            <span class="pay-detail-label">网络类型:</span>
+            <span class="pay-detail-value">${networkType}</span>
         </div>`)
+        hasDeviceInfo = true
+    }
+
+    // 如果有设备信息，则添加设备信息分组标题和内容
+    if (hasDeviceInfo) {
+        details.push('<div class="device-info-header" style="margin: 12px 0 8px 0; padding: 4px 8px; background: rgba(33, 150, 243, 0.1); border-radius: 4px; font-size: 12px; font-weight: bold; color: #2196f3;">📱 设备信息</div>')
+        details.push(...deviceInfoDetails)
     }
 
     // 响应信息
