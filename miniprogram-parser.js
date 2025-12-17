@@ -469,6 +469,101 @@ export function parseMiniprogramData(jsonData) {
 }
 
 /**
+ * 生成树形结构的HTML
+ */
+function generateTreeStructure(data, sectionTitle, sectionIcon, copyData = null) {
+    if (!data || (typeof data === 'object' && Object.keys(data).length === 0)) {
+        return ''
+    }
+
+    const treeId = `tree-${sectionTitle.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+
+    let html = `<div class="tree-section collapsed" id="${treeId}">
+        <div class="tree-section-header" onclick="toggleTreeSection('${treeId}')">
+            <span class="tree-toggle">▶</span>
+            <span>${sectionIcon}</span>
+            <span>[${sectionTitle}]</span>`
+
+    if (copyData) {
+        html += `<button class="tree-section-copy" data-copy="${encodeURIComponent(JSON.stringify(data, null, 2))}" onclick="copyData(this)">复制</button>`
+    }
+
+    html += `        </div>
+        <div class="tree-section-content">
+            ${generateTreeNodes(data, 0)}
+        </div>
+    </div>`
+
+    return html
+}
+
+/**
+ * 生成树形节点
+ */
+function generateTreeNodes(data, depth = 0, path = '') {
+    if (data === null || data === undefined) {
+        return `<div class="tree-leaf"><span class="tree-leaf-key">${path}:</span> <span class="tree-leaf-value">${data}</span></div>`
+    }
+
+    if (typeof data !== 'object') {
+        const value = typeof data === 'string' ? `"${data}"` : data
+        return `<div class="tree-leaf"><span class="tree-leaf-key">${path}:</span> <span class="tree-leaf-value">${value}</span></div>`
+    }
+
+    if (Array.isArray(data)) {
+        if (data.length === 0) {
+            return `<div class="tree-leaf"><span class="tree-leaf-key">${path}:</span> <span class="tree-leaf-value">[]</span></div>`
+        }
+
+        let html = ''
+        data.forEach((item, index) => {
+            const itemPath = path ? `${path}[${index}]` : `[${index}]`
+            html += generateTreeNodes(item, depth, itemPath)
+        })
+        return html
+    }
+
+    // 对象类型
+    const keys = Object.keys(data)
+    if (keys.length === 0) {
+        return `<div class="tree-leaf"><span class="tree-leaf-key">${path}:</span> <span class="tree-leaf-value">{}</span></div>`
+    }
+
+    if (depth >= 3) { // 限制深度，避免无限递归
+        return `<div class="tree-leaf"><span class="tree-leaf-key">${path}:</span> <span class="tree-leaf-value">{...}</span></div>`
+    }
+
+    let html = ''
+    keys.forEach(key => {
+        const value = data[key]
+        const fullPath = path ? `${path}.${key}` : key
+        const nodeId = `node-${fullPath.replace(/[^a-zA-Z0-9]/g, '-')}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+
+        if (typeof value === 'object' && value !== null && Object.keys(value).length > 0) {
+            html += `<div class="tree-node collapsed" id="${nodeId}">
+                <div class="tree-node-header" onclick="toggleTreeNode('${nodeId}')">
+                    <span class="tree-node-icon">▶</span>
+                    <span class="tree-node-value">${key}</span>
+                </div>
+                <div class="tree-node-children">
+                    ${generateTreeNodes(value, depth + 1, fullPath)}
+                </div>
+            </div>`
+        } else {
+            const displayValue = value === null ? 'null' :
+                               value === undefined ? 'undefined' :
+                               typeof value === 'string' ? `"${value}"` : value
+            html += `<div class="tree-leaf">
+                <span class="tree-leaf-key">${key}:</span>
+                <span class="tree-leaf-value">${displayValue}</span>
+            </div>`
+        }
+    })
+
+    return html
+}
+
+/**
  * 获取小程序事件详细描述
  */
 export function getMiniprogramEventDetail(item) {
@@ -566,6 +661,14 @@ export function getMiniprogramEventDetail(item) {
             <span class="pay-detail-icon">👤</span>
             <span class="pay-detail-label">用户ID:</span>
             <span class="pay-detail-value">${props.userId || props.openId}</span>
+        </div>`)
+        
+    }
+    if (props.ip) {
+        details.push(`<div class="pay-detail-item">
+            <span class="pay-detail-icon">🌍</span>
+            <span class="pay-detail-label">用户IP:</span>
+            <span class="pay-detail-value">${props.ip}</span>
         </div>`)
     }
 
@@ -666,30 +769,40 @@ export function getMiniprogramEventDetail(item) {
         }
     }
 
-    // failReason
-    if (item.failReason) {
-        const frText = item.failReason
-        details.push(`<div class="pay-detail-item">
-            <span class="pay-detail-icon">⚠️</span>
-            <span class="pay-detail-label">failReason:</span>
-            <span class="pay-detail-value">
-                <pre style="white-space: pre-wrap; margin: 0;">${encodeHtml(frText)}</pre>
-                <button class="copy-btn" data-copy="${encodeURIComponent(frText)}" onclick="copyData(this)">复制</button>
-            </span>
-        </div>`)
-    }
-
     // 小程序信息
     if (props.miniprogramName) {
+        details.push('<div class="device-info-header" style="margin: 12px 0 8px 0; padding: 4px 8px; background: rgba(33, 150, 243, 0.1); border-radius: 4px; font-size: 12px; font-weight: bold; color: #2196f3;">📱 小程序信息</div>')
         details.push(`<div class="pay-detail-item">
             <span class="pay-detail-icon">📱</span>
             <span class="pay-detail-label">小程序:</span>
             <span class="pay-detail-value">${props.miniprogramName}</span>
         </div>`)
+        if (props.miniprogramAppId) {
+            details.push(`<div class="pay-detail-item">
+                <span class="pay-detail-icon">📱</span>
+                <span class="pay-detail-label">小程序AppID:</span>
+                <span class="pay-detail-value">${props.miniprogramAppId}</span>
+            </div>`)
+        }
+        if (props.platform_type) {
+            details.push(`<div class="pay-detail-item">
+                <span class="pay-detail-icon">📱</span>
+            <span class="pay-detail-label">平台类型:</span>
+            <span class="pay-detail-value">${props.platform_type}</span>
+        </div>`)
+        }
+        if (props.linkid) {
+            details.push(`<div class="pay-detail-item">
+                <span class="pay-detail-icon">📱</span>
+                <span class="pay-detail-label">链接ID:</span>
+                <span class="pay-detail-value">${props.linkid}</span>
+            </div>`)
+        }
     }
 
     // 书籍信息
     if (props.bookName) {
+        details.push('<div class="device-info-header" style="margin: 12px 0 8px 0; padding: 4px 8px; background: rgba(33, 150, 243, 0.1); border-radius: 4px; font-size: 12px; font-weight: bold; color: #2196f3;">📚 书籍信息</div>')
         details.push(`<div class="pay-detail-item">
             <span class="pay-detail-icon">📚</span>
             <span class="pay-detail-label">书籍:</span>
@@ -707,6 +820,7 @@ export function getMiniprogramEventDetail(item) {
 
     // 广告信息
     if (props.adType) {
+        details.push('<div class="device-info-header" style="margin: 12px 0 8px 0; padding: 4px 8px; background: rgba(33, 150, 243, 0.1); border-radius: 4px; font-size: 12px; font-weight: bold; color: #2196f3;">📺 广告信息</div>')
         details.push(`<div class="pay-detail-item">
             <span class="pay-detail-icon">📺</span>
             <span class="pay-detail-label">广告类型:</span>
@@ -733,6 +847,7 @@ export function getMiniprogramEventDetail(item) {
     // 成功/失败状态
     if (props.isSuccess !== undefined) {
         const success = props.isSuccess === true || props.isSuccess === 'true'
+        details.push('<div class="device-info-header" style="margin: 12px 0 8px 0; padding: 4px 8px; background: rgba(33, 150, 243, 0.1); border-radius: 4px; font-size: 12px; font-weight: bold; color: #2196f3;">⚙️ 状态信息</div>')
         details.push(`<div class="pay-detail-item" style="color: ${success ? '#4caf50' : '#f44336'}">
             <span class="pay-detail-icon">${success ? '✅' : '❌'}</span>
             <span class="pay-detail-label">状态:</span>
@@ -740,8 +855,81 @@ export function getMiniprogramEventDetail(item) {
         </div>`)
     }
 
-    // 请求参数（格式化 JSON）
-    if (props.args) {
+    // API请求详情 - 树形结构显示
+    // 从 failReason 中解析 [method]/[response]/[error] 部分
+    const failReason = props.failReason
+    let methodData = null
+    let responseData = null
+    let errorData = null
+
+    if (failReason) {
+        const reasonStr = String(failReason)
+
+        // 解析 [method] 部分 - 处理换行符
+        const methodMatch = reasonStr.match(/\[method\]:\s*\n?\s*(\{[\s\S]*?\})(?=\n?\s*\[|$)/)
+        if (methodMatch) {
+            try {
+                methodData = JSON.parse(methodMatch[1])
+            } catch (e) {
+                console.warn('Failed to parse method data:', e, methodMatch[1])
+            }
+        }
+
+        // 解析 [response] 部分 - 处理换行符
+        const responseMatch = reasonStr.match(/\[response\]:\s*\n?\s*(\{[\s\S]*?\})(?=\n?\s*\[|$)/)
+        if (responseMatch) {
+            try {
+                responseData = JSON.parse(responseMatch[1])
+            } catch (e) {
+                console.warn('Failed to parse response data:', e, responseMatch[1])
+            }
+        }
+
+        // 解析 [error] 部分 - 处理换行符，支持JSON和纯文本
+        const errorMatch = reasonStr.match(/\[error\]:\s*\n?\s*(.+?)(?=\n?\s*\[|$)/s)
+        if (errorMatch) {
+            const errorContent = errorMatch[1].trim()
+            // 尝试作为JSON解析，如果失败则作为纯文本处理
+            try {
+                if (errorContent.startsWith('{') && errorContent.endsWith('}')) {
+                    errorData = JSON.parse(errorContent)
+                } else {
+                    // 纯文本错误信息
+                    errorData = { message: errorContent }
+                }
+            } catch (e) {
+                console.warn('Failed to parse error data:', e, errorContent)
+                errorData = { message: errorContent }
+            }
+        }
+    }
+
+    // [method] 部分
+    if (methodData) {
+        const treeHtml = generateTreeStructure(methodData, 'method', '📨', methodData)
+        if (treeHtml) {
+            details.push(treeHtml)
+        }
+    }
+
+    // [response] 部分（如果有响应数据且没有错误）
+    if (responseData && !errorData) {
+        const treeHtml = generateTreeStructure(responseData, 'response', '📥', responseData)
+        if (treeHtml) {
+            details.push(treeHtml)
+        }
+    }
+
+    // [error] 部分（如果有错误数据）
+    if (errorData) {
+        const treeHtml = generateTreeStructure(errorData, 'error', '❌', errorData)
+        if (treeHtml) {
+            details.push(treeHtml)
+        }
+    }
+
+    // 如果没有API数据，则显示传统格式的args
+    if (!methodData && !responseData && !errorData && props.args) {
         const formatted = formatJson(props.args)
         details.push(`<div class="pay-detail-item">
             <span class="pay-detail-icon">📨</span>

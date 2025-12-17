@@ -1,6 +1,6 @@
 /**
- * 埋点日志分析工具 - 主入口
- * 支持神策埋点(Excel)和小程序埋点(JSON)两种数据源
+ * 神策埋点日志分析工具 - 主入口
+ * 专门处理神策埋点(Excel)数据源
  */
 
 import {
@@ -21,25 +21,16 @@ import {
     exportToExcel,
 } from './sensors-parser.js'
 
-import {
-    MINIPROGRAM_EVENT_MAP,
-    EVENT_NAME_MAP,
-    parseMiniprogramData,
-    getMiniprogramEventDetail,
-    exportToJSON,
-} from './miniprogram-parser.js'
-
 // 全局变量
 let allData = []
 let filteredData = []
 let currentPage = 1
 let pageSize = 50
-let currentDataSource = 'miniprogram' // 默认小程序
 
 // DOM 元素（延迟初始化）
 let uploadArea, fileInput, fileInfo, resultSection, tableBody
-let eventFilter, categoryFilter, levelFilter, searchInput, pagination, pageSizeSelect
-let dataSourceSelect, uploadHint
+let eventFilter, categoryFilter, searchInput, pagination, pageSizeSelect
+let uploadHint
 
 // 复制工具
 window.copyData = function (btn) {
@@ -62,10 +53,8 @@ function init() {
     eventFilter = document.getElementById('eventFilter')
     categoryFilter = document.getElementById('categoryFilter')
     searchInput = document.getElementById('searchInput')
-    levelFilter = document.getElementById('levelFilter')
     pagination = document.getElementById('pagination')
     pageSizeSelect = document.getElementById('pageSizeSelect')
-    dataSourceSelect = document.getElementById('dataSourceSelect')
     uploadHint = document.getElementById('uploadHint')
 
     // 检查必要的DOM元素是否存在
@@ -83,18 +72,17 @@ function init() {
     if (categoryFilter) categoryFilter.addEventListener('change', applyFilters)
     if (searchInput) searchInput.addEventListener('input', debounce(applyFilters, 300))
     if (pageSizeSelect) pageSizeSelect.addEventListener('change', handlePageSizeChange)
-    if (dataSourceSelect) dataSourceSelect.addEventListener('change', handleDataSourceChange)
-    if (levelFilter) levelFilter.addEventListener('change', applyFilters)
 
     // 初始化分类筛选器
     updateCategoryFilter()
-    // 默认选中小程序数据源
-    if (dataSourceSelect) {
-        dataSourceSelect.value = 'miniprogram'
-        handleDataSourceChange({ target: dataSourceSelect })
+
+    // 设置文件输入类型（神策专用）
+    if (fileInput && uploadHint) {
+        fileInput.accept = '.xlsx,.xls'
+        uploadHint.textContent = '支持 .xlsx, .xls 格式'
     }
 
-    console.log('✅ 埋点分析工具初始化完成')
+    console.log('✅ 神策埋点分析工具初始化完成')
 }
 
 // 等待DOM加载完成
@@ -105,67 +93,18 @@ if (document.readyState === 'loading') {
     init()
 }
 
-// 数据源切换处理
-function handleDataSourceChange(e) {
-    currentDataSource = e.target.value
-
-    // 更新文件输入类型和提示
-    if (fileInput && uploadHint) {
-        if (currentDataSource === 'sensors') {
-            fileInput.accept = '.xlsx,.xls'
-            uploadHint.textContent = '支持 .xlsx, .xls 格式'
-        } else {
-            fileInput.accept = '.json'
-            uploadHint.textContent = '支持 .json 格式 (Grafana 导出)'
-        }
-    }
-
-    // 更新分类筛选器选项
-    updateCategoryFilter()
-
-    // level 筛选器仅小程序显示
-    if (levelFilter) {
-        if (currentDataSource === 'miniprogram') {
-            levelFilter.style.display = 'inline-block'
-        } else {
-            levelFilter.value = ''
-            levelFilter.style.display = 'none'
-        }
-    }
-
-    // 清空已有数据
-    allData = []
-    filteredData = []
-    if (resultSection) resultSection.style.display = 'none'
-    if (fileInfo) fileInfo.style.display = 'none'
-}
-
-// 更新分类筛选器
+// 更新分类筛选器（神策专用）
 function updateCategoryFilter() {
     if (!categoryFilter) return
-    categoryFilter.innerHTML = '<option value="">全部分类</option>'
-
-    if (currentDataSource === 'sensors') {
-        categoryFilter.innerHTML += `
-            <option value="auto">自动采集</option>
-            <option value="custom">自定义事件</option>
-            <option value="pay">支付相关</option>
-            <option value="channel">渠道相关</option>
-            <option value="read">阅读相关</option>
-            <option value="search">搜索相关</option>
-        `
-    } else {
-        categoryFilter.innerHTML += `
-            <option value="api">API请求</option>
-            <option value="ad">广告相关</option>
-            <option value="pay">支付相关</option>
-            <option value="read">阅读相关</option>
-            <option value="search">搜索相关</option>
-            <option value="system">系统事件</option>
-            <option value="channel">渠道相关</option>
-            <option value="custom">自定义</option>
-        `
-    }
+    categoryFilter.innerHTML = `
+        <option value="">全部分类</option>
+        <option value="auto">自动采集</option>
+        <option value="custom">自定义事件</option>
+        <option value="pay">支付相关</option>
+        <option value="channel">渠道相关</option>
+        <option value="read">阅读相关</option>
+        <option value="search">搜索相关</option>
+    `
 }
 
 // 分页大小变更处理
@@ -204,13 +143,9 @@ function handleFileSelect(e) {
     }
 }
 
-// 处理文件
+// 处理文件（神策专用）
 function processFile(file) {
-    if (currentDataSource === 'sensors') {
-        processExcelFile(file)
-    } else {
-        processJSONFile(file)
-    }
+    processExcelFile(file)
 }
 
 // 处理 Excel 文件 (神策)
@@ -256,44 +191,6 @@ function processExcelFile(file) {
     reader.readAsArrayBuffer(file)
 }
 
-// 处理 JSON 文件 (小程序埋点)
-function processJSONFile(file) {
-    if (!fileInfo) {
-        console.error('fileInfo元素未初始化')
-        return
-    }
-
-    if (!file.name.match(/\.json$/i)) {
-        alert('请上传 JSON 文件 (.json)')
-        return
-    }
-
-    fileInfo.style.display = 'block'
-    fileInfo.style.background = '#e3f2fd'
-    fileInfo.style.color = '#1565c0'
-    fileInfo.textContent = `正在解析文件: ${file.name} (${formatFileSize(file.size)})`
-
-    const reader = new FileReader()
-    reader.onload = function (e) {
-        try {
-            const jsonData = JSON.parse(e.target.result)
-
-            fileInfo.innerHTML = `✅ 文件解析成功: <strong>${file.name}</strong> | 共 <strong>${jsonData.length}</strong> 条记录`
-
-            allData = parseMiniprogramData(jsonData)
-            updateEventFilter()
-            applyFilters()
-            resultSection.style.display = 'block'
-        } catch (error) {
-            console.error('解析错误:', error)
-            fileInfo.style.background = '#ffebee'
-            fileInfo.style.color = '#c62828'
-            fileInfo.textContent = `❌ 文件解析失败: ${error.message}`
-        }
-    }
-    reader.readAsText(file)
-}
-
 // 更新事件筛选器
 function updateEventFilter() {
     if (!eventFilter) return
@@ -301,12 +198,7 @@ function updateEventFilter() {
     eventFilter.innerHTML = '<option value="">全部事件</option>'
 
     eventTypes.forEach((event) => {
-        let info
-        if (currentDataSource === 'sensors') {
-            info = SENSORS_EVENT_MAP[event] || { desc: '未知事件' }
-        } else {
-            info = MINIPROGRAM_EVENT_MAP[event] || EVENT_NAME_MAP[event] || { desc: event.split('/').pop() || '未知事件' }
-        }
+        const info = SENSORS_EVENT_MAP[event] || { desc: '未知事件' }
         const option = document.createElement('option')
         option.value = event
         const fullText = `${info.desc || event}`
@@ -328,7 +220,6 @@ function applyFilters() {
     const eventValue = eventFilter.value
     const categoryValue = categoryFilter.value
     const searchValue = searchInput.value.toLowerCase()
-    const levelValue = currentDataSource === 'miniprogram' && levelFilter ? levelFilter.value : ''
 
     filteredData = allData.filter((item) => {
         // 事件筛选
@@ -336,12 +227,6 @@ function applyFilters() {
 
         // 分类筛选
         if (categoryValue && item.category !== categoryValue) return false
-
-        // level 筛选（仅小程序）
-        if (levelValue) {
-            const itemLevel = (item.properties && item.properties.level) || (item.rawData && item.rawData.level)
-            if (itemLevel !== levelValue) return false
-        }
 
         // 搜索筛选
         if (searchValue) {
@@ -357,31 +242,19 @@ function applyFilters() {
     renderPagination()
 }
 
-// 检查是否需要显示tooltip
+// 检查是否需要显示tooltip（神策专用）
 function hasDetailTooltip(item) {
-    if (currentDataSource === 'sensors') {
-        return sensorsHasDetailTooltip(item)
-    } else {
-        return item.hasTooltip || item.category === 'ad' || item.category === 'pay' || item.level === 'ERROR'
-    }
+    return sensorsHasDetailTooltip(item)
 }
 
-// 获取tooltip图标
+// 获取tooltip图标（神策专用）
 function getTooltipIcon(item) {
-    if (currentDataSource === 'sensors') {
-        return sensorsGetTooltipIcon(item)
-    } else {
-        return item.icon || '📋'
-    }
+    return sensorsGetTooltipIcon(item)
 }
 
-// 获取事件详情
+// 获取事件详情（神策专用）
 function getEventDetail(item) {
-    if (currentDataSource === 'sensors') {
-        return getPayEventDetail(item)
-    } else {
-        return getMiniprogramEventDetail(item)
-    }
+    return getPayEventDetail(item)
 }
 
 // 渲染表格
@@ -406,31 +279,15 @@ function renderTable() {
             const tooltipIcon = getTooltipIcon(item)
             const isPay = item.category === 'pay'
             const isAd = item.category === 'ad'
-            const isError = currentDataSource === 'miniprogram' && item.level === 'ERROR'
-            const rowClass = isPay ? 'pay-row' : (isAd ? 'ad-row' : (isError ? 'error-row' : ''))
-
-            // code / reason 小徽标（仅小程序）
-            let codeReasonBadges = ''
-            if (currentDataSource === 'miniprogram') {
-                const codeVal = item.properties?.code
-                const reasonVal = item.properties?.reason
-                if (codeVal !== undefined) {
-                    codeReasonBadges += `<span class="mini-badge code-badge">Code ${escapeHtml(codeVal)}</span>`
-                }
-                if (reasonVal) {
-                    const reasonText = escapeHtml(String(reasonVal))
-                    const shortReason = reasonText.length > 60 ? reasonText.slice(0, 60) + '...' : reasonText
-                    codeReasonBadges += `<span class="mini-badge reason-badge" title="${reasonText}">${shortReason}</span>`
-                }
-            }
+            const rowClass = isPay ? 'pay-row' : (isAd ? 'ad-row' : '')
 
             const descContent = showTooltip
                 ? `<div class="pay-desc-wrapper" onmouseenter="showPayTooltip(event, this)" onmouseleave="hidePayTooltip()">
-                       <div class="pay-desc-trigger ${isPay ? '' : isAd ? 'tooltip-trigger-ad' : isError ? 'tooltip-trigger-error' : 'tooltip-trigger-read'}">
+                       <div class="pay-desc-trigger ${isPay ? '' : isAd ? 'tooltip-trigger-ad' : 'tooltip-trigger-read'}">
                            <span class="pay-icon">${tooltipIcon}</span>
                            <span>${item.desc}</span>
                        </div>
-                       <div class="pay-tooltip ${isPay ? '' : isAd ? 'tooltip-ad' : isError ? 'tooltip-error' : 'tooltip-read'}">
+                       <div class="pay-tooltip ${isPay ? '' : isAd ? 'tooltip-ad' : 'tooltip-read'}">
                            <div class="pay-tooltip-title">${item.desc}</div>
                            <div class="pay-tooltip-detail">${item.detail}</div>
                            <div class="pay-tooltip-info">${getEventDetail(item)}</div>
@@ -438,22 +295,8 @@ function renderTable() {
                    </div>`
                 : `<div><span style="margin-right: 6px;">${item.icon || ''}</span>${item.desc}</div><div class="event-desc">${item.detail}</div>`
 
-            const eventNameContent = isError && item.failReason
-                ? `<div class="pay-desc-wrapper" onmouseenter="showPayTooltip(event, this)" onmouseleave="hidePayTooltip()">
-                        <div class="pay-desc-trigger tooltip-trigger-error">
-                            <span class="pay-icon">⚠️</span>
-                            <span>${currentDataSource === 'miniprogram' ? (item.desc || item.event) : item.event}</span>
-                            ${codeReasonBadges}
-                        </div>
-                        <div class="pay-tooltip tooltip-error">
-                            <div class="pay-tooltip-title">ERROR</div>
-                            <div class="pay-tooltip-detail">${item.desc || item.event}</div>
-                            <div class="pay-tooltip-info"><pre style="white-space: pre-wrap; margin: 0;">${item.failReason}</pre></div>
-                        </div>
-                    </div>`
-                : `<div class="event-name-line">
-                        <span class="event-badge ${CATEGORY_STYLES[item.category] || 'event-custom'}">${currentDataSource === 'miniprogram' ? (item.desc || item.event) : item.event}</span>
-                        ${codeReasonBadges}
+            const eventNameContent = `<div class="event-name-line">
+                        <span class="event-badge ${CATEGORY_STYLES[item.category] || 'event-custom'}">${item.event}</span>
                    </div>`
 
             const rawJson = escapeHtml(JSON.stringify(item.rawData || {}, null, 2))
@@ -463,7 +306,7 @@ function renderTable() {
         <tr class="${rowClass}">
             <td>${item.index}</td>
             <td class="time-cell">${item.time || '-'}</td>
-            <td class="${isError ? 'event-error' : ''}">
+            <td>
                 ${eventNameContent}
             </td>
             <td class="desc-cell">${descContent}</td>
@@ -480,7 +323,7 @@ function renderTable() {
                 </div>
             </td>
             <td>
-                <button class="copy-btn" data-copy="${rawCopy}" onclick="copyData(this)">复制</button>
+                <button class="copy-btn" data-copy="${rawCopy}" onclick="copyData(this)">复制数据</button>
             </td>
         </tr>
     `
@@ -518,13 +361,9 @@ window.goToPage = function(page) {
     document.querySelector('.table-container').scrollTop = 0
 }
 
-// 导出筛选结果
+// 导出筛选结果（神策专用）
 window.exportFilteredData = function() {
-    if (currentDataSource === 'sensors') {
-        exportToExcel(filteredData)
-    } else {
-        exportToJSON(filteredData)
-    }
+    exportToExcel(filteredData)
 }
 
 // 显示tooltip
