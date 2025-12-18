@@ -95,7 +95,7 @@ function init() {
         sortOrderSelect.value = sortOrder // 设置默认值
     }
 
-    console.log('✅ 小程序日志分析工具初始化完成')
+    console.log('✅ 日志分析工具初始化完成')
 }
 
 // 等待DOM加载完成

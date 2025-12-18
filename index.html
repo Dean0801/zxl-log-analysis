@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>小程序日志分析工具</title>
+        <title>日志分析工具</title>
         <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
         <link rel="icon" type="image/png" href="./favicon.png" />
         <link rel="shortcut icon" href="./favicon.ico" />
@@ -1080,7 +1080,7 @@
     <body>
         <div class="container">
             <div class="header">
-                <h1>🔧 小程序日志分析工具</h1>
+                <h1>🔧 日志分析工具</h1>
                 <p>上传 Grafana 导出的 JSON 文件进行分析</p>
                 <div style="margin-top: 15px;">
                     <button onclick="window.location.href='sensors.html'" style="padding: 12px 24px; background: linear-gradient(135deg, #5a9a10 0%, #7fbe25 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; transition: all 0.3s;">
@@ -1103,7 +1103,7 @@
                 
                 <!-- 隐藏的select用于JS控制 -->
                 <select id="dataSourceSelect" style="display: none;">
-                    <option value="miniprogram" selected>小程序日志</option>
+                    <option value="miniprogram" selected>普通日志</option>
                     <option value="sensors">神策日志</option>
                 </select>
             </div>
@@ -1125,14 +1125,12 @@
                             <option value="read">阅读相关</option>
                             <option value="search">搜索相关</option>
                         </select>
-                        <!-- 小程序 level 筛选，仅小程序数据源显示 -->
                         <select class="filter-select" id="levelFilter" style="display: none;">
                             <option value="">全部 level</option>
                             <option value="INFO">INFO</option>
                             <option value="WARN">WARN</option>
                             <option value="ERROR">ERROR</option>
                         </select>
-                        <!-- 小程序排序选择器，仅小程序数据源显示 -->
                         <select class="filter-select" id="sortOrder" style="display: none;">
                             <option value="desc">倒序排列</option>
                             <option value="asc">正序排列</option>
@@ -1180,7 +1178,7 @@
                 </div>
                 <div class="detail-modal-body">
                     <div class="detail-data-source">
-                        <span class="data-source-badge">小程序日志</span>
+                        <span class="data-source-badge">日志</span>
                     </div>
                     <div class="detail-event-info">
                         <div class="detail-event-title" id="modalEventTitle"></div>
