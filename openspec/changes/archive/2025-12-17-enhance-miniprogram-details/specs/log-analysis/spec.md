@@ -12,7 +12,7 @@ The system SHALL provide an enhanced details view for Mini Program log events th
 - **THEN** the system SHALL display a modal dialog containing:
   - Event description and details from the tooltip
   - Complete event properties in formatted display
-  - Data source identifier ("小程序埋点")
+  - Data source identifier ("小程序日志")
   - Attractive, well-organized layout
 
 #### Scenario: Modal Interaction

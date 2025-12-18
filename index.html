@@ -3,7 +3,10 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>小程序埋点日志分析工具</title>
+        <title>小程序日志分析工具</title>
+        <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+        <link rel="icon" type="image/png" href="./favicon.png" />
+        <link rel="shortcut icon" href="./favicon.ico" />
         <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
         <style>
             * {
@@ -876,6 +879,31 @@
                 border-color: #ffe0b2;
                 color: #ef6c00;
             }
+            /* 错误状态码标签样式 */
+            .error-code-badge {
+                display: inline-block;
+                padding: 3px 8px;
+                font-size: 11px;
+                font-weight: 600;
+                border-radius: 4px;
+                background: #ffebee;
+                color: #c62828;
+                border: 1px solid #ef5350;
+            }
+            /* 错误消息标签样式 */
+            .error-message-badge {
+                display: inline-block;
+                padding: 3px 8px;
+                font-size: 11px;
+                border-radius: 4px;
+                background: #fff3e0;
+                color: #e65100;
+                border: 1px solid #ffb74d;
+                max-width: 260px;
+                white-space: normal;
+                overflow-wrap: break-word;
+                cursor: help;
+            }
             .desc-cell,
             .desc-cell .pay-desc-wrapper,
             .desc-cell .pay-desc-trigger {
@@ -1052,11 +1080,11 @@
     <body>
         <div class="container">
             <div class="header">
-                <h1>🔧 小程序埋点日志分析工具</h1>
+                <h1>🔧 小程序日志分析工具</h1>
                 <p>上传 Grafana 导出的 JSON 文件进行分析</p>
                 <div style="margin-top: 15px;">
                     <button onclick="window.location.href='sensors.html'" style="padding: 12px 24px; background: linear-gradient(135deg, #5a9a10 0%, #7fbe25 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; transition: all 0.3s;">
-                        📈 转到神策埋点分析
+                        📈 转到神策日志分析
                     </button>
                 </div>
             </div>
@@ -1075,8 +1103,8 @@
                 
                 <!-- 隐藏的select用于JS控制 -->
                 <select id="dataSourceSelect" style="display: none;">
-                    <option value="miniprogram" selected>小程序埋点</option>
-                    <option value="sensors">神策埋点</option>
+                    <option value="miniprogram" selected>小程序日志</option>
+                    <option value="sensors">神策日志</option>
                 </select>
             </div>
 
@@ -1152,7 +1180,7 @@
                 </div>
                 <div class="detail-modal-body">
                     <div class="detail-data-source">
-                        <span class="data-source-badge">小程序埋点</span>
+                        <span class="data-source-badge">小程序日志</span>
                     </div>
                     <div class="detail-event-info">
                         <div class="detail-event-title" id="modalEventTitle"></div>

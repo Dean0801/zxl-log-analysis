@@ -1,6 +1,6 @@
 /**
- * 小程序埋点日志解析器
- * 解析从 Grafana/Loki 导出的 JSON 日志文件
+ * 小程序日志解析器
+ * 解析从 Grafana 导出的 JSON 日志文件
  */
 
 import { formatTimeWithMs, CATEGORY_NAMES } from './common.js'
@@ -128,7 +128,7 @@ export const MINIPROGRAM_EVENT_MAP = {
     '/api.miniprogram.v1.Report/ReportAnalysis': {
         desc: '上报分析数据',
         category: 'custom',
-        detail: '上报埋点分析数据',
+        detail: '上报日志分析数据',
         icon: '📈',
     },
 
@@ -432,6 +432,46 @@ export function parseMiniprogramData(jsonData) {
 
             const failReasonText = parseFailReason(properties.failReason)
 
+            // 从failReason中提取response的code和message，以及error信息
+            let responseCode = null
+            let responseMessage = null
+            let errorMessage = null
+            if (properties.failReason) {
+                const reasonStr = String(properties.failReason)
+                // 解析 [response] 部分
+                const responseMatch = reasonStr.match(/\[response\]:\s*\n?\s*(\{[\s\S]*?\})(?=\n?\s*\[|$)/)
+                if (responseMatch) {
+                    try {
+                        const responseData = JSON.parse(responseMatch[1])
+                        // 提取code（可能在data.code或statusCode）
+                        responseCode = responseData.data?.code || responseData.statusCode || responseData.code
+                        // 提取message（可能在data.message）
+                        responseMessage = responseData.data?.message || responseData.message
+                    } catch (e) {
+                        // 解析失败，忽略
+                    }
+                }
+                
+                // 解析 [error] 部分
+                const errorMatch = reasonStr.match(/\[error\]:\s*\n?\s*(.+?)(?=\n?\s*\[|$)/s)
+                if (errorMatch) {
+                    const errorContent = errorMatch[1].trim()
+                    // 尝试作为JSON解析，如果失败则作为纯文本处理
+                    try {
+                        if (errorContent.startsWith('{') && errorContent.endsWith('}')) {
+                            const errorData = JSON.parse(errorContent)
+                            errorMessage = errorData.message || errorContent
+                        } else {
+                            // 纯文本错误信息
+                            errorMessage = errorContent
+                        }
+                    } catch (e) {
+                        // 解析失败，使用原始内容
+                        errorMessage = errorContent
+                    }
+                }
+            }
+
             allData.push({
                 originalIndex: index + 1,
                 time: timeStr,
@@ -451,6 +491,9 @@ export function parseMiniprogramData(jsonData) {
                            category === 'ad' || category === 'pay' ||
                            (level === 'ERROR' && !!failReasonText),
                 failReason: failReasonText,
+                responseCode: responseCode,
+                responseMessage: responseMessage,
+                errorMessage: errorMessage,
             })
         } catch (e) {
             console.warn('解析日志记录失败:', e, record)
@@ -627,18 +670,18 @@ export function getMiniprogramEventDetail(item) {
         }
 
         // 失败原因详情（从analysisData中提取）
-        const failReason = raw.analysisData?.fail_reason || props.fail_reason
-        if (failReason) {
-            const frText = encodeHtml(failReason)
-            details.push(`<div class="pay-detail-item">
-                <span class="pay-detail-icon">⚠️</span>
-                <span class="pay-detail-label">失败详情:</span>
-                <span class="pay-detail-value">
-                    <pre style="white-space: pre-wrap; margin: 0; font-size: 12px; max-height: 150px; overflow-y: auto;">${frText}</pre>
-                    <button class="copy-btn" data-copy="${encodeURIComponent(failReason)}" onclick="copyData(this)">复制</button>
-                </span>
-            </div>`)
-        }
+        // const failReason = raw.analysisData?.fail_reason || props.fail_reason
+        // if (failReason) {
+        //     const frText = encodeHtml(failReason)
+        //     details.push(`<div class="pay-detail-item">
+        //         <span class="pay-detail-icon">⚠️</span>
+        //         <span class="pay-detail-label">失败详情:</span>
+        //         <span class="pay-detail-value">
+        //             <pre style="white-space: pre-wrap; margin: 0; font-size: 12px; max-height: 150px; overflow-y: auto;">${frText}</pre>
+        //             <button class="copy-btn" data-copy="${encodeURIComponent(failReason)}" onclick="copyData(this)">复制</button>
+        //         </span>
+        //     </div>`)
+        // }
 
         // 请求延迟信息（针对API错误）
         if (props.latency) {
@@ -863,6 +906,8 @@ export function getMiniprogramEventDetail(item) {
     let errorData = null
 
     if (failReason) {
+        details.push('<div class="device-info-header" style="margin: 12px 0 8px 0; padding: 4px 8px; background: rgba(33, 150, 243, 0.1); border-radius: 4px; font-size: 12px; font-weight: bold; color: red;"> 🔍 失败详情</div>')
+
         const reasonStr = String(failReason)
 
         // 解析 [method] 部分 - 处理换行符
@@ -1019,7 +1064,7 @@ export function exportToJSON(filteredData) {
 
     const a = document.createElement('a')
     a.href = url
-    a.download = `小程序埋点分析结果_${new Date().toLocaleDateString('zh-CN').replace(/\//g, '-')}.json`
+    a.download = `小程序日志分析结果_${new Date().toLocaleDateString('zh-CN').replace(/\//g, '-')}.json`
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)

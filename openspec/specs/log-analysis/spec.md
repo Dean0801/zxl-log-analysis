@@ -28,6 +28,28 @@ The system SHALL provide web-based tools for analyzing tracking logs from multip
 - **THEN** the tool SHALL display records in a tabular format
 - **AND** show event details, categories, and properties appropriate to the data source
 
+#### Scenario: Error Status Code Badge Display
+- **WHEN** a Mini Program log record contains a response with error status code (e.g., code 400, 401, 403, 404, 500)
+- **THEN** the system SHALL display a status code badge in the event description column
+- **AND** the badge SHALL show the numeric status code (e.g., "400", "401")
+- **AND** the badge SHALL use a visually distinct style (e.g., red or orange background) to indicate error status
+- **AND** the badge SHALL be positioned within the event description column alongside the existing event description content
+
+#### Scenario: Error Message Badge Display
+- **WHEN** a Mini Program log record contains a response with a message field
+- **THEN** the system SHALL display a message badge in the event description column
+- **AND** the badge SHALL show the message content (e.g., "参数校验失败")
+- **AND** the badge SHALL be positioned next to the status code badge
+- **AND** the badge SHALL use a style that complements the status code badge while remaining readable
+
+#### Scenario: Badge Display Logic
+- **WHEN** parsing Mini Program log data
+- **THEN** the system SHALL extract code and message fields from the response data within failReason
+- **AND** SHALL only display badges when code indicates an error status (400-599)
+- **AND** SHALL display status code badge for any error status code
+- **AND** SHALL display message badge only when message field exists and is not empty
+- **AND** SHALL not display badges for successful status codes (200-299)
+
 #### Scenario: Error Record Tooltip Enhancement
 - **WHEN** user hovers over an ERROR level record in Mini Program data source
 - **THEN** the tool SHALL display a detailed tooltip with structured error information

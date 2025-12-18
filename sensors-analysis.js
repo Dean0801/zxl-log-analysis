@@ -1,6 +1,6 @@
 /**
- * 神策埋点日志分析工具 - 主入口
- * 专门处理神策埋点(Excel)数据源
+ * 神策日志分析工具 - 主入口
+ * 专门处理神策日志(Excel)数据源
  */
 
 import {
@@ -82,7 +82,7 @@ function init() {
         uploadHint.textContent = '支持 .xlsx, .xls 格式'
     }
 
-    console.log('✅ 神策埋点分析工具初始化完成')
+    console.log('✅ 神策日志分析工具初始化完成')
 }
 
 // 等待DOM加载完成

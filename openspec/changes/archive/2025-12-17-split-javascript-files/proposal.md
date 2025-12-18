@@ -14,8 +14,8 @@
 - 便于独立开发和测试
 
 ## What Changes
-- 创建 `miniprogram-analysis.js` 专门处理小程序埋点页面逻辑
-- 创建 `sensors-analysis.js` 专门处理神策埋点页面逻辑
+- 创建 `miniprogram-analysis.js` 专门处理小程序日志页面逻辑
+- 创建 `sensors-analysis.js` 专门处理神策日志页面逻辑
 - 修改 `index.html` 加载 `miniprogram-analysis.js`
 - 修改 `sensors.html` 加载 `sensors-analysis.js`
 - 移除原有的 `analysis.js` 文件

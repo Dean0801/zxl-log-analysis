@@ -1,7 +1,7 @@
-# Change: 移除小程序埋点事件描述列的hover tooltip
+# Change: 移除小程序日志事件描述列的hover tooltip
 
 ## Why
-当前小程序埋点页面的事件描述列具有复杂的hover tooltip功能，会在鼠标悬停时显示详细信息。虽然这个功能提供了额外的信息，但也可能造成用户体验的干扰：
+当前小程序日志页面的事件描述列具有复杂的hover tooltip功能，会在鼠标悬停时显示详细信息。虽然这个功能提供了额外的信息，但也可能造成用户体验的干扰：
 
 - Hover tooltip会遮挡其他内容
 - 在移动设备上hover行为不适用
@@ -15,10 +15,10 @@
 - 改善移动端体验
 
 ## What Changes
-- 移除小程序埋点页面事件描述列的所有hover tooltip功能
+- 移除小程序日志页面事件描述列的所有hover tooltip功能
 - 简化事件描述列的HTML结构，移除复杂的wrapper和trigger元素
 - 保留详情弹窗功能作为查看详细信息的主要方式
-- 只影响小程序埋点页面，神策页面保持不变
+- 只影响小程序日志页面，神策页面保持不变
 
 ## Impact
 - Affected specs: log-analysis

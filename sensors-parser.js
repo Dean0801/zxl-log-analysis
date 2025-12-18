@@ -1,5 +1,5 @@
 /**
- * 神策埋点日志解析器
+ * 神策日志解析器
  * 解析从神策导出的 Excel 文件
  */
 
@@ -550,9 +550,9 @@ export function exportToExcel(filteredData) {
 
     const ws = XLSX.utils.json_to_sheet(exportData)
     const wb = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(wb, ws, '埋点分析结果')
+    XLSX.utils.book_append_sheet(wb, ws, '日志分析结果')
 
-    const fileName = `埋点分析结果_${new Date().toLocaleDateString('zh-CN').replace(/\//g, '-')}.xlsx`
+    const fileName = `日志分析结果_${new Date().toLocaleDateString('zh-CN').replace(/\//g, '-')}.xlsx`
     XLSX.writeFile(wb, fileName)
 }
 

@@ -1,6 +1,6 @@
 /**
- * 小程序埋点日志分析工具 - 主入口
- * 专门处理小程序埋点(JSON)数据源
+ * 小程序日志分析工具 - 主入口
+ * 专门处理小程序日志(JSON)数据源
  */
 
 import {
@@ -95,7 +95,7 @@ function init() {
         sortOrderSelect.value = sortOrder // 设置默认值
     }
 
-    console.log('✅ 小程序埋点分析工具初始化完成')
+    console.log('✅ 小程序日志分析工具初始化完成')
 }
 
 // 等待DOM加载完成
@@ -169,7 +169,7 @@ function processFile(file) {
     processJSONFile(file)
 }
 
-// 处理 JSON 文件 (小程序埋点)
+// 处理 JSON 文件 (小程序日志)
 function processJSONFile(file) {
     if (!fileInfo) {
         console.error('fileInfo元素未初始化')
@@ -327,8 +327,27 @@ function renderTable() {
                 codeReasonBadges += `<span class="mini-badge reason-badge" title="${reasonText}">${shortReason}</span>`
             }
 
+            // 生成错误状态码和消息标签
+            let errorBadges = ''
+            if (item.responseCode && item.responseCode >= 400 && item.responseCode < 600) {
+                // 状态码标签
+                errorBadges += `<span class="error-code-badge">${item.responseCode}</span>`
+                // 消息标签
+                if (item.responseMessage) {
+                    const messageText = escapeHtml(String(item.responseMessage))
+                    const shortMessage = messageText.length > 30 ? messageText.slice(0, 30) + '...' : messageText
+                    errorBadges += `<span class="error-message-badge" title="${messageText}">${shortMessage}</span>`
+                }
+            }
+            
+            // 如果有error信息，也显示标签
+            if (item.errorMessage) {
+                const errorText = escapeHtml(String(item.errorMessage))
+                errorBadges += `<span class="error-message-badge" title="${errorText}">${errorText}</span>`
+            }
+
             // 简化的事件描述显示，移除hover tooltip
-            const descContent = `<div><span style="margin-right: 6px;">${item.icon || ''}</span>${item.desc}</div><div class="event-desc">${item.detail}</div>`
+            const descContent = `<div><span style="margin-right: 6px;">${item.icon || ''}</span>${item.desc}</div><div class="event-desc">${item.detail}</div>${errorBadges ? `<div style="margin-top: 4px; display: flex; gap: 6px; flex-wrap: wrap;">${errorBadges}</div>` : ''}`
 
             // 简化的事件名称显示，移除hover tooltip
             const eventNameContent = isError && item.failReason
