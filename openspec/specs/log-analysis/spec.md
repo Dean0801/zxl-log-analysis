@@ -90,6 +90,8 @@ The system SHALL provide an enhanced details view for Mini Program log events th
 
 The system SHALL organize API log details into three distinct sections: [method] for request information, [response] for response data, and [error] for error information (only one of response or error SHALL be displayed). Each section SHALL use a collapsible tree structure where parent nodes can be expanded to show child details.
 
+The system SHALL display tree nodes with clear visual hierarchy that makes parent-child relationships immediately apparent. Child nodes SHALL be visually indented relative to their parent nodes, and visual connection lines SHALL indicate the nesting structure.
+
 #### Scenario: Simplified Event Description Display
 - **WHEN** user views the Mini Program data table
 - **THEN** the system SHALL display event descriptions without hover tooltips
@@ -116,6 +118,14 @@ The system SHALL organize API log details into three distinct sections: [method]
 - **AND** SHALL display an expand indicator (▶) that changes to collapse indicator (▼) when expanded
 - **AND** SHALL maintain expansion state during modal interaction
 - **AND** SHALL allow nested tree structures for complex data objects
+
+#### Scenario: Clear Visual Hierarchy
+- **WHEN** displaying nested data structures in the tree view (e.g., `data.metadata`)
+- **THEN** child nodes SHALL be visually indented relative to their parent nodes
+- **AND** SHALL use progressive indentation (e.g., 20-24px per depth level) to clearly distinguish nesting levels
+- **AND** SHALL display visual connection lines or borders to indicate parent-child relationships
+- **AND** SHALL use different background colors or opacity levels for different depth levels to enhance visual distinction
+- **AND** SHALL ensure that nested nodes (like `metadata` within `data`) are clearly recognizable as children, not siblings
 
 #### Scenario: Reduced Interface Complexity
 - **WHEN** displaying the Mini Program event table

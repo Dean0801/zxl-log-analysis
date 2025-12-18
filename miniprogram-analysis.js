@@ -515,11 +515,7 @@ window.showDetailModal = function(index, itemData) {
 
     // 格式化属性信息
     if (propertiesEl) {
-        if (itemData.properties && Object.keys(itemData.properties).length > 0) {
-            propertiesEl.textContent = JSON.stringify(itemData.properties, null, 2)
-        } else {
-            propertiesEl.innerHTML = '<em style="color: #999;">无属性数据</em>'
-        }
+        propertiesEl.textContent = JSON.stringify(itemData.rawData || {}, null, 2)
     }
 
     // 显示弹窗

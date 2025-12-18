@@ -502,17 +502,17 @@ function generateTreeStructure(data, sectionTitle, sectionIcon, copyData = null)
  */
 function generateTreeNodes(data, depth = 0, path = '') {
     if (data === null || data === undefined) {
-        return `<div class="tree-leaf"><span class="tree-leaf-key">${path}:</span> <span class="tree-leaf-value">${data}</span></div>`
+        return `<div class="tree-leaf" data-depth="${depth}"><span class="tree-leaf-key">${path}:</span> <span class="tree-leaf-value">${data}</span></div>`
     }
 
     if (typeof data !== 'object') {
         const value = typeof data === 'string' ? `"${data}"` : data
-        return `<div class="tree-leaf"><span class="tree-leaf-key">${path}:</span> <span class="tree-leaf-value">${value}</span></div>`
+        return `<div class="tree-leaf" data-depth="${depth}"><span class="tree-leaf-key">${path}:</span> <span class="tree-leaf-value">${value}</span></div>`
     }
 
     if (Array.isArray(data)) {
         if (data.length === 0) {
-            return `<div class="tree-leaf"><span class="tree-leaf-key">${path}:</span> <span class="tree-leaf-value">[]</span></div>`
+            return `<div class="tree-leaf" data-depth="${depth}"><span class="tree-leaf-key">${path}:</span> <span class="tree-leaf-value">[]</span></div>`
         }
 
         let html = ''
@@ -526,11 +526,11 @@ function generateTreeNodes(data, depth = 0, path = '') {
     // 对象类型
     const keys = Object.keys(data)
     if (keys.length === 0) {
-        return `<div class="tree-leaf"><span class="tree-leaf-key">${path}:</span> <span class="tree-leaf-value">{}</span></div>`
+        return `<div class="tree-leaf" data-depth="${depth}"><span class="tree-leaf-key">${path}:</span> <span class="tree-leaf-value">{}</span></div>`
     }
 
     if (depth >= 3) { // 限制深度，避免无限递归
-        return `<div class="tree-leaf"><span class="tree-leaf-key">${path}:</span> <span class="tree-leaf-value">{...}</span></div>`
+        return `<div class="tree-leaf" data-depth="${depth}"><span class="tree-leaf-key">${path}:</span> <span class="tree-leaf-value">{...}</span></div>`
     }
 
     let html = ''
@@ -540,12 +540,12 @@ function generateTreeNodes(data, depth = 0, path = '') {
         const nodeId = `node-${fullPath.replace(/[^a-zA-Z0-9]/g, '-')}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
 
         if (typeof value === 'object' && value !== null && Object.keys(value).length > 0) {
-            html += `<div class="tree-node collapsed" id="${nodeId}">
+            html += `<div class="tree-node collapsed" data-depth="${depth}" id="${nodeId}">
                 <div class="tree-node-header" onclick="toggleTreeNode('${nodeId}')">
                     <span class="tree-node-icon">▶</span>
                     <span class="tree-node-value">${key}</span>
                 </div>
-                <div class="tree-node-children">
+                <div class="tree-node-children" data-depth="${depth + 1}">
                     ${generateTreeNodes(value, depth + 1, fullPath)}
                 </div>
             </div>`
@@ -553,7 +553,7 @@ function generateTreeNodes(data, depth = 0, path = '') {
             const displayValue = value === null ? 'null' :
                                value === undefined ? 'undefined' :
                                typeof value === 'string' ? `"${value}"` : value
-            html += `<div class="tree-leaf">
+            html += `<div class="tree-leaf" data-depth="${depth}">
                 <span class="tree-leaf-key">${key}:</span>
                 <span class="tree-leaf-value">${displayValue}</span>
             </div>`
