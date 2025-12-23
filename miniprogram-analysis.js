@@ -125,6 +125,8 @@ function updateCategoryFilter() {
 // 排序顺序变更处理
 function handleSortOrderChange(e) {
     sortOrder = e.target.value
+    // 确保在排序切换时重置到第1页并正确更新
+    currentPage = 1
     applyFilters()
 }
 
@@ -271,9 +273,18 @@ function applyFilters() {
         }
     })
 
+    // 确保重置到第1页（防止从非第1页切换排序时状态不一致）
     currentPage = 1
+    
+    // 确保表格和分页控件都正确更新
     renderTable()
     renderPagination()
+    
+    // 滚动到表格顶部，确保用户看到更新后的内容
+    const tableContainer = document.querySelector('.table-container')
+    if (tableContainer) {
+        tableContainer.scrollTop = 0
+    }
 }
 
 // 检查是否需要显示tooltip（小程序专用）
@@ -329,6 +340,12 @@ function renderTable() {
 
             // 生成错误状态码和消息标签
             let errorBadges = ''
+
+            if (item.rawData?.analysisData?.index || item.rawData?.analysisData?.index === 0) {
+                // 埋点顺序标签
+                errorBadges += `<span class="error-index-badge">${item.rawData?.analysisData?.index}</span>`
+            }
+            
             if (item.responseCode && item.responseCode >= 400 && item.responseCode < 600) {
                 // 状态码标签
                 errorBadges += `<span class="error-code-badge">${item.responseCode}</span>`
