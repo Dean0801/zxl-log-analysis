@@ -345,6 +345,13 @@ function renderTable() {
                 // 埋点顺序标签
                 errorBadges += `<span class="error-index-badge">${item.rawData?.analysisData?.index}</span>`
             }
+
+            if (item.failReason) {
+                // 埋点失败原因标签
+                errorBadges += `<span class="error-code-badge">${item.failReason}</span>`
+            }
+
+            console.log(item)
             
             if (item.responseCode && item.responseCode >= 400 && item.responseCode < 600) {
                 // 状态码标签

@@ -351,7 +351,7 @@ export function parseMiniprogramData(jsonData) {
                     icon: '📋',
                 }
                 eventDesc = msgInfo.desc
-                eventDetail = lineData.msg || ''
+                eventDetail = lineData.message || lineData.msg || ''
                 category = msgInfo.category
                 icon = msgInfo.icon || '📋'
             }
