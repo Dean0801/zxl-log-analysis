@@ -351,8 +351,6 @@ function renderTable() {
                 errorBadges += `<span class="error-code-badge">${item.failReason}</span>`
             }
 
-            console.log(item)
-            
             if (item.responseCode && item.responseCode >= 400 && item.responseCode < 600) {
                 // 状态码标签
                 errorBadges += `<span class="error-code-badge">${item.responseCode}</span>`
