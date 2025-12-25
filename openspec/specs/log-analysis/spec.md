@@ -91,10 +91,16 @@ The system SHALL provide sorting controls for Mini Program log data to allow use
 - **THEN** the system SHALL display a sort order selector in the filter section
 - **AND** SHALL provide options for ascending (正序) and descending (倒序) order
 
-#### Scenario: Default Descending Order
+#### Scenario: Default Ascending Order
 - **WHEN** Mini Program data is loaded and displayed
-- **THEN** the system SHALL default to descending order (最新数据在前)
-- **AND** SHALL sort records by index in reverse order
+- **THEN** the system SHALL default to ascending order (正序)
+- **AND** SHALL sort records by index in ascending order
+
+#### Scenario: Sort Order Reset on File Upload
+- **WHEN** user uploads a new JSON file
+- **THEN** the system SHALL reset the sort order to ascending (正序)
+- **AND** SHALL update the sort order selector to reflect the default value
+- **AND** SHALL display the new file's data sorted in ascending order
 
 #### Scenario: Sort Order Toggle
 - **WHEN** user changes the sort order selector

@@ -25,7 +25,7 @@ let allData = []
 let filteredData = []
 let currentPage = 1
 let pageSize = 50
-let sortOrder = 'desc' // 默认倒序
+let sortOrder = 'asc' // 默认正序
 
 // DOM 元素（延迟初始化）
 let uploadArea, fileInput, fileInfo, resultSection, tableBody
@@ -194,6 +194,12 @@ function processJSONFile(file) {
             const jsonData = JSON.parse(e.target.result)
 
             fileInfo.innerHTML = `✅ 文件解析成功: <strong>${file.name}</strong> | 共 <strong>${jsonData.length}</strong> 条记录`
+
+            // 重置排序为默认值（正序）
+            sortOrder = 'asc'
+            if (sortOrderSelect) {
+                sortOrderSelect.value = 'asc'
+            }
 
             allData = parseMiniprogramData(jsonData)
             updateEventFilter()
