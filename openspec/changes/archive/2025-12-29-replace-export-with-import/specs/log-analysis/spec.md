@@ -1,9 +1,3 @@
-## REMOVED Requirements
-
-### Requirement: Export Filtered Results
-**Reason**: 用户不再需要导出筛选结果功能，改为使用导入功能合并多个文件的数据。
-**Migration**: 导出功能已移除，用户可以通过导入功能合并多个文件的数据进行分析。
-
 ## ADDED Requirements
 
 ### Requirement: Import Additional Files
