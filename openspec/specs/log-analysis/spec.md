@@ -84,23 +84,24 @@ The system SHALL maintain separate JavaScript codebases for each data source to 
 - **AND** SHALL be testable in isolation from other data source implementations
 
 ### Requirement: Mini Program Data Sorting
-The system SHALL provide sorting controls for Mini Program log data to allow users to view records in ascending or descending order based on record index.
+The system SHALL provide sorting controls for Mini Program log data to allow users to view records in ascending or descending order based on record index, or in ascending order based on calibrated time (上报时间).
 
 #### Scenario: Sort Control Display
 - **WHEN** user accesses the Mini Program page
 - **THEN** the system SHALL display a sort order selector in the filter section
-- **AND** SHALL provide options for ascending (正序) and descending (倒序) order
+- **AND** SHALL provide options for ascending (正序) and descending (倒序) order based on index
+- **AND** SHALL provide an option for sorting by calibrated time (按上报时间排序) in ascending order
 
 #### Scenario: Default Ascending Order
 - **WHEN** Mini Program data is loaded and displayed
-- **THEN** the system SHALL default to ascending order (正序)
+- **THEN** the system SHALL default to ascending order (正序) based on index
 - **AND** SHALL sort records by index in ascending order
 
 #### Scenario: Sort Order Reset on File Upload
 - **WHEN** user uploads a new JSON file
-- **THEN** the system SHALL reset the sort order to ascending (正序)
+- **THEN** the system SHALL reset the sort order to ascending (正序) based on index
 - **AND** SHALL update the sort order selector to reflect the default value
-- **AND** SHALL display the new file's data sorted in ascending order
+- **AND** SHALL display the new file's data sorted in ascending order by index
 
 #### Scenario: Sort Order Toggle
 - **WHEN** user changes the sort order selector
@@ -121,6 +122,17 @@ The system SHALL provide sorting controls for Mini Program log data to allow use
 - **AND** SHALL update table content to show the first page of re-sorted data
 - **AND** SHALL update pagination controls to reflect page 1 of the new total pages
 - **AND** SHALL ensure no stale data or pagination state is displayed
+
+#### Scenario: Sort by Calibrated Time
+- **WHEN** user selects "按上报时间排序" option
+- **THEN** the system SHALL sort records by `calibratedTime` from `item.rawData.analysisData.calibratedTime` in ascending order
+- **AND** SHALL place records with earlier calibratedTime before records with later calibratedTime
+- **AND** SHALL handle records missing calibratedTime field gracefully (place them at the end or use index as fallback)
+
+#### Scenario: Calibrated Time Sort with Missing Data
+- **WHEN** user selects "按上报时间排序" and some records do not have `calibratedTime` field
+- **THEN** the system SHALL sort records with valid `calibratedTime` first in ascending order
+- **AND** SHALL place records without `calibratedTime` at the end, sorted by index as fallback
 
 ### Requirement: Enhanced Mini Program Event Details
 The system SHALL provide an enhanced details view for Mini Program log events through a dedicated modal dialog with tree-structured display of API request information. Event description column SHALL NOT display hover tooltips to avoid interface clutter and focus user attention on the primary detail modal.
@@ -177,4 +189,33 @@ The system SHALL display tree nodes with clear visual hierarchy that makes paren
 - **AND** SHALL show [error] section only when error data is available
 - **AND** SHALL display data source identifier prominently in the modal
 - **AND** SHALL maintain existing copy functionality for each data section
+
+### Requirement: Session-Based Color Coding for Error Index Badges
+The system SHALL assign colors to error index badges based on sessionId to visually distinguish records from different sessions. Records with the same sessionId SHALL use the same color, and colors SHALL cycle through a predefined color list when the number of unique sessionIds exceeds the list length.
+
+#### Scenario: Color Assignment Based on SessionId
+- **WHEN** rendering an error index badge with a valid sessionId in `item.rawData.analysisData.sessionId`
+- **THEN** the system SHALL assign a color from the predefined color list based on the sessionId
+- **AND** SHALL apply the color to the badge's background, border, and text color
+- **AND** SHALL ensure the same sessionId always receives the same color
+
+#### Scenario: Color Consistency Across Records
+- **WHEN** multiple log records share the same sessionId
+- **THEN** the system SHALL display all their error index badges with the same color
+- **AND** SHALL maintain color consistency across different pages and filter states
+
+#### Scenario: Color List Cycling
+- **WHEN** the number of unique sessionIds exceeds the predefined color list length
+- **THEN** the system SHALL cycle through the color list from the beginning
+- **AND** SHALL use modulo arithmetic to map sessionIds to colors
+
+#### Scenario: Missing SessionId Handling
+- **WHEN** a log record does not have a sessionId or the sessionId is empty/null
+- **THEN** the system SHALL display the error index badge with default styling
+- **AND** SHALL not apply session-based color coding
+
+#### Scenario: Color List Definition
+- **WHEN** assigning colors to error index badges
+- **THEN** the system SHALL use the predefined color list: ['#67C23A', '#E6A23C', '#F56C6C', '#909399', '#409EFF']
+- **AND** SHALL apply colors in the order specified in the list
 

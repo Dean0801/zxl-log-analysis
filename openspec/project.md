@@ -12,6 +12,10 @@
 
 ## Project Conventions
 
+### Default Module Focus
+- **后续修改默认针对小程序模块**：除非明确指定，所有功能增强、bug 修复和优化工作默认应用于小程序（Mini Program）数据源模块。
+- 神策（Sensors）模块的修改需要明确说明，否则默认不涉及。
+
 ### Code Style
 - 模块化 ES import/export，函数式组织；业务文案和注释使用中文。
 - 代码风格偏向单引号、少量/无分号，使用防抖、空值检查保护 DOM 访问。

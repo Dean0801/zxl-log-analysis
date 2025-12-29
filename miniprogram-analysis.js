@@ -26,6 +26,8 @@ let filteredData = []
 let currentPage = 1
 let pageSize = 50
 let sortOrder = 'asc' // 默认正序
+let sessionIdColorMap = new Map() // sessionId 到颜色索引的映射
+let nextColorIndex = 0 // 下一个要分配的颜色索引
 
 // DOM 元素（延迟初始化）
 let uploadArea, fileInput, fileInfo, resultSection, tableBody
@@ -201,6 +203,10 @@ function processJSONFile(file) {
                 sortOrderSelect.value = 'asc'
             }
 
+            // 重置颜色映射，确保新文件的 sessionId 从第一个颜色开始分配
+            sessionIdColorMap.clear()
+            nextColorIndex = 0
+
             allData = parseMiniprogramData(jsonData)
             updateEventFilter()
             applyFilters()
@@ -270,12 +276,37 @@ function applyFilters() {
 
     // 应用排序
     filteredData.sort((a, b) => {
-        const aIndex = a.index || 0
-        const bIndex = b.index || 0
-        if (sortOrder === 'asc') {
+        if (sortOrder === 'calibratedTime') {
+            // 按上报时间排序（正序）
+            const aTime = a.rawData?.analysisData?.calibratedTime
+            const bTime = b.rawData?.analysisData?.calibratedTime
+            
+            // 如果两个都有 calibratedTime，按时间排序
+            if (aTime && bTime) {
+                const aTimeNum = typeof aTime === 'number' ? aTime : new Date(aTime).getTime()
+                const bTimeNum = typeof bTime === 'number' ? bTime : new Date(bTime).getTime()
+                if (!isNaN(aTimeNum) && !isNaN(bTimeNum)) {
+                    return aTimeNum - bTimeNum
+                }
+            }
+            
+            // 如果只有一个有 calibratedTime，有时间的排在前面
+            if (aTime && !bTime) return -1
+            if (!aTime && bTime) return 1
+            
+            // 如果都没有 calibratedTime，按 index 排序作为降级
+            const aIndex = a.index || 0
+            const bIndex = b.index || 0
             return aIndex - bIndex
         } else {
-            return bIndex - aIndex
+            // 按 index 排序（正序或倒序）
+            const aIndex = a.index || 0
+            const bIndex = b.index || 0
+            if (sortOrder === 'asc') {
+                return aIndex - bIndex
+            } else {
+                return bIndex - aIndex
+            }
         }
     })
 
@@ -306,6 +337,43 @@ function getTooltipIcon(item) {
 // 获取事件详情（小程序专用）
 function getEventDetail(item) {
     return getMiniprogramEventDetail(item)
+}
+
+// 根据 sessionId 获取颜色
+function getColorBySessionId(sessionId) {
+    const HEX_COLOR_LIST = [
+        '#67C23A', // 绿色
+        '#E6A23C', // 橙色
+        '#F56C6C', // 红色
+        '#909399', // 灰色
+        '#409EFF', // 蓝色
+        '#9C27B0', // 紫色
+    ]
+    
+    if (!sessionId) {
+        return null
+    }
+    
+    // 如果该 sessionId 已经分配过颜色，直接返回
+    if (sessionIdColorMap.has(sessionId)) {
+        const colorIndex = sessionIdColorMap.get(sessionId)
+        return HEX_COLOR_LIST[colorIndex]
+    }
+    
+    // 为新 sessionId 分配颜色（按顺序循环分配）
+    const colorIndex = nextColorIndex % HEX_COLOR_LIST.length
+    sessionIdColorMap.set(sessionId, colorIndex)
+    nextColorIndex++
+    
+    return HEX_COLOR_LIST[colorIndex]
+}
+
+// 将十六进制颜色转换为带透明度的 rgba
+function hexToRgba(hex, alpha = 0.2) {
+    const r = parseInt(hex.slice(1, 3), 16)
+    const g = parseInt(hex.slice(3, 5), 16)
+    const b = parseInt(hex.slice(5, 7), 16)
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`
 }
 
 // 渲染表格
@@ -349,7 +417,24 @@ function renderTable() {
 
             if (item.rawData?.analysisData?.index || item.rawData?.analysisData?.index === 0) {
                 // 埋点顺序标签
-                errorBadges += `<span class="error-index-badge">${item.rawData?.analysisData?.index}</span>`
+                const sessionId = item.rawData?.analysisData?.sessionId
+                const color = getColorBySessionId(sessionId)
+                
+                let badgeStyle = ''
+                let badgeTitle = ''
+                if (color) {
+                    // 字体颜色直接使用，背景和边框使用透明度
+                    const bgColor = hexToRgba(color, 0.2) // 背景透明度 20%
+                    const borderColor = hexToRgba(color, 0.5) // 边框透明度 50%
+                    badgeStyle = `style="background: ${bgColor}; border-color: ${borderColor}; color: ${color};"`
+                }
+                
+                // 如果有 sessionId，添加 title 属性用于鼠标悬浮显示
+                if (sessionId) {
+                    badgeTitle = `title="${escapeHtml(String(sessionId))}"`
+                }
+                
+                errorBadges += `<span class="error-index-badge" ${badgeStyle} ${badgeTitle}>${item.rawData?.analysisData?.index}</span>`
             }
 
             if (item.failReason) {
