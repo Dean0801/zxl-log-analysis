@@ -1149,18 +1149,17 @@
                             <option value="ERROR">ERROR</option>
                         </select>
                         <select class="filter-select" id="sortOrder" style="display: none;">
-                            <option value="desc">倒序排列</option>
-                            <option value="asc">正序排列</option>
+                            <option value="desc">时间倒序排列</option>
+                            <option value="asc">时间正序排列</option>
                             <option value="calibratedTime">按上报时间排序</option>
                         </select>
-                        <button class="export-btn" onclick="exportFilteredData()">📥 导出筛选结果</button>
+                        <button class="export-btn" onclick="showImportModal()">📥 导入其他文件</button>
                     </div>
                 </div>
                 <div class="table-container">
                     <table id="resultTable">
                         <thead>
                             <tr>
-                                <th style="width: 40px">序号</th>
                                 <th style="width: 120px">时间</th>
                                 <th style="width: 180px">事件名称</th>
                                 <th style="width: 180px">事件描述</th>
@@ -1206,6 +1205,29 @@
                     <div class="detail-properties">
                         <h4>📊 事件属性</h4>
                         <div class="properties-content" id="modalProperties"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 导入文件弹窗 -->
+        <div id="importModal" class="detail-modal">
+            <div class="detail-modal-content">
+                <div class="detail-modal-header">
+                    <h3>📥 导入其他文件</h3>
+                    <span class="detail-modal-close" onclick="hideImportModal()">&times;</span>
+                </div>
+                <div class="detail-modal-body">
+                    <div class="upload-section">
+                        <div class="upload-area" id="importUploadArea">
+                            <label for="importFileInput" class="upload-label">
+                                <input type="file" id="importFileInput" accept=".json" class="file-input-hidden" />
+                                <div class="upload-icon">📁</div>
+                                <div class="upload-text">点击或拖拽上传文件</div>
+                                <div class="upload-hint">支持 .json 格式 (Grafana 导出)</div>
+                            </label>
+                        </div>
+                        <div class="file-info" id="importFileInfo"></div>
                     </div>
                 </div>
             </div>

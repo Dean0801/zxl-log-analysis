@@ -17,7 +17,6 @@ import {
     EVENT_NAME_MAP,
     parseMiniprogramData,
     getMiniprogramEventDetail,
-    exportToJSON,
 } from './miniprogram-parser.js'
 
 // 全局变量
@@ -299,13 +298,15 @@ function applyFilters() {
             const bIndex = b.index || 0
             return aIndex - bIndex
         } else {
-            // 按 index 排序（正序或倒序）
-            const aIndex = a.index || 0
-            const bIndex = b.index || 0
+            // 按时间排序（正序或倒序）
+            const aTimestamp = a.timestamp || 0
+            const bTimestamp = b.timestamp || 0
             if (sortOrder === 'asc') {
-                return aIndex - bIndex
+                // 正序：时间早的在前面
+                return aTimestamp - bTimestamp
             } else {
-                return bIndex - aIndex
+                // 倒序：时间晚的在前面
+                return bTimestamp - aTimestamp
             }
         }
     })
@@ -478,7 +479,6 @@ function renderTable() {
 
             return `
         <tr class="${rowClass}">
-            <td>${item.index}</td>
             <td class="time-cell">${item.time || '-'}</td>
             <td class="${isError ? 'event-error' : ''}">
                 ${eventNameContent}
@@ -492,7 +492,7 @@ function renderTable() {
             <td class="page-cell">${item.pagePath || '-'}</td>
             <td>
                 <div class="operation-buttons">
-                    <button class="detail-btn" onclick="showDetailModal(${item.index}, ${JSON.stringify(item).replace(/"/g, '&quot;')})">查看详情</button>
+                    <button class="detail-btn" onclick="showDetailModal(${JSON.stringify(item).replace(/"/g, '&quot;')})">查看详情</button>
                     <button class="copy-btn" data-copy="${rawCopy}" onclick="copyData(this)">复制</button>
                 </div>
             </td>
@@ -532,9 +532,199 @@ window.goToPage = function(page) {
     document.querySelector('.table-container').scrollTop = 0
 }
 
-// 导出筛选结果（小程序专用）
-window.exportFilteredData = function() {
-    exportToJSON(filteredData)
+// 显示导入模态框
+window.showImportModal = function() {
+    const importModal = document.getElementById('importModal')
+    if (importModal) {
+        importModal.style.display = 'block'
+        // 初始化导入上传区域的事件监听
+        initImportUploadArea()
+        
+        // 设置关闭按钮事件
+        const closeBtn = importModal.querySelector('.detail-modal-close')
+        if (closeBtn) {
+            closeBtn.onclick = function() {
+                hideImportModal()
+            }
+        }
+        
+        // 点击背景关闭
+        importModal.onclick = function(event) {
+            if (event.target === importModal) {
+                hideImportModal()
+            }
+        }
+    }
+}
+
+// 隐藏导入模态框
+window.hideImportModal = function() {
+    const importModal = document.getElementById('importModal')
+    if (importModal) {
+        importModal.style.display = 'none'
+        // 重置导入文件信息
+        const importFileInfo = document.getElementById('importFileInfo')
+        if (importFileInfo) {
+            importFileInfo.style.display = 'none'
+            importFileInfo.textContent = ''
+        }
+        // 重置文件输入
+        const importFileInput = document.getElementById('importFileInput')
+        if (importFileInput) {
+            importFileInput.value = ''
+        }
+    }
+}
+
+// 初始化导入上传区域
+function initImportUploadArea() {
+    const importUploadArea = document.getElementById('importUploadArea')
+    const importFileInput = document.getElementById('importFileInput')
+    
+    if (!importUploadArea || !importFileInput) return
+
+    // 检查是否已经绑定过事件监听器（避免重复绑定）
+    if (importUploadArea.dataset.listenersBound === 'true') {
+        return
+    }
+
+    // 添加拖拽事件
+    importUploadArea.addEventListener('dragover', handleImportDragOver)
+    importUploadArea.addEventListener('dragleave', handleImportDragLeave)
+    importUploadArea.addEventListener('drop', handleImportDrop)
+    importFileInput.addEventListener('change', handleImportFileSelect)
+    
+    // 标记已绑定事件监听器
+    importUploadArea.dataset.listenersBound = 'true'
+}
+
+// 导入拖拽处理
+function handleImportDragOver(e) {
+    e.preventDefault()
+    const importUploadArea = document.getElementById('importUploadArea')
+    if (importUploadArea) importUploadArea.classList.add('dragover')
+}
+
+function handleImportDragLeave(e) {
+    e.preventDefault()
+    const importUploadArea = document.getElementById('importUploadArea')
+    if (importUploadArea) importUploadArea.classList.remove('dragover')
+}
+
+function handleImportDrop(e) {
+    e.preventDefault()
+    const importUploadArea = document.getElementById('importUploadArea')
+    if (importUploadArea) importUploadArea.classList.remove('dragover')
+    const files = e.dataTransfer.files
+    if (files.length > 0) {
+        processImportFile(files[0])
+    }
+}
+
+// 导入文件选择处理
+function handleImportFileSelect(e) {
+    const files = e.target.files
+    if (files.length > 0) {
+        processImportFile(files[0])
+    }
+}
+
+// 处理导入文件
+function processImportFile(file) {
+    const importFileInfo = document.getElementById('importFileInfo')
+    
+    if (!importFileInfo) {
+        console.error('importFileInfo元素未初始化')
+        return
+    }
+
+    if (!file.name.match(/\.json$/i)) {
+        importFileInfo.style.display = 'block'
+        importFileInfo.style.background = '#ffebee'
+        importFileInfo.style.color = '#c62828'
+        importFileInfo.textContent = '❌ 请上传 JSON 文件 (.json)'
+        return
+    }
+
+    importFileInfo.style.display = 'block'
+    importFileInfo.style.background = '#e3f2fd'
+    importFileInfo.style.color = '#1565c0'
+    importFileInfo.textContent = `正在解析文件: ${file.name} (${formatFileSize(file.size)})`
+
+    const reader = new FileReader()
+    reader.onload = function (e) {
+        try {
+            const jsonData = JSON.parse(e.target.result)
+            
+            if (!Array.isArray(jsonData) || jsonData.length === 0) {
+                importFileInfo.style.background = '#ffebee'
+                importFileInfo.style.color = '#c62828'
+                importFileInfo.textContent = '❌ 文件为空或格式不正确，请确保文件包含有效的日志数据'
+                return
+            }
+
+            // 解析新数据
+            const newData = parseMiniprogramData(jsonData)
+            
+            if (newData.length === 0) {
+                importFileInfo.style.background = '#ffebee'
+                importFileInfo.style.color = '#c62828'
+                importFileInfo.textContent = '❌ 文件中没有有效的日志记录'
+                return
+            }
+
+            // 合并数据：始终合并，保留现有数据
+            const existingDataCount = allData.length
+            
+            // 无论是否有现有数据，都进行合并操作
+            // 如果有现有数据，追加新数据；如果没有，则新数据就是全部数据
+            if (existingDataCount > 0) {
+                // 获取现有数据的最大序号
+                const maxIndex = Math.max(...allData.map(item => item.index || 0), 0)
+                
+                // 更新新数据的序号，从最大序号+1开始
+                newData.forEach((item, idx) => {
+                    item.index = maxIndex + idx + 1
+                })
+                
+                // 合并数据，保留现有 sessionId 颜色映射
+                allData = [...allData, ...newData]
+                importFileInfo.innerHTML = `✅ 文件解析成功: <strong>${file.name}</strong> | 导入 <strong>${newData.length}</strong> 条记录 | 原有 <strong>${existingDataCount}</strong> 条 | 总计 <strong>${allData.length}</strong> 条记录`
+            } else {
+                // 首次导入（没有现有数据），重置颜色映射
+                sessionIdColorMap.clear()
+                nextColorIndex = 0
+                allData = [...newData] // 使用展开运算符保持一致性
+                importFileInfo.innerHTML = `✅ 文件解析成功: <strong>${file.name}</strong> | 共 <strong>${allData.length}</strong> 条记录`
+            }
+
+            // 更新事件筛选器
+            updateEventFilter()
+            
+            // 重置到第一页
+            currentPage = 1
+            
+            // 重新应用筛选
+            applyFilters()
+            
+            // 显示结果区域（如果之前隐藏）
+            if (resultSection) {
+                resultSection.style.display = 'block'
+            }
+
+            // 延迟关闭模态框，让用户看到成功消息
+            setTimeout(() => {
+                hideImportModal()
+            }, 1500)
+
+        } catch (error) {
+            console.error('解析错误:', error)
+            importFileInfo.style.background = '#ffebee'
+            importFileInfo.style.color = '#c62828'
+            importFileInfo.textContent = `❌ 文件解析失败: ${error.message}`
+        }
+    }
+    reader.readAsText(file)
 }
 
 // 显示tooltip
@@ -628,7 +818,7 @@ window.toggleTreeNode = function(nodeId) {
     }
 }
 
-window.showDetailModal = function(index, itemData) {
+window.showDetailModal = function(itemData) {
     const modal = document.getElementById('detailModal')
     if (!modal) return
 

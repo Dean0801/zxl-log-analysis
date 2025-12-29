@@ -1039,35 +1039,4 @@ export function getMiniprogramEventDetail(item) {
     return details.length > 0 ? details.join('') : '<div class="no-detail">暂无详细信息</div>'
 }
 
-/**
- * 导出筛选结果为JSON
- */
-export function exportToJSON(filteredData) {
-    if (filteredData.length === 0) {
-        alert('没有可导出的数据')
-        return
-    }
-
-    const exportData = filteredData.map((item) => ({
-        index: item.index,
-        time: item.time,
-        event: item.event,
-        desc: item.desc,
-        category: CATEGORY_NAMES[item.category] || '其他',
-        pagePath: item.pagePath,
-        properties: item.properties,
-    }))
-
-    const jsonStr = JSON.stringify(exportData, null, 2)
-    const blob = new Blob([jsonStr], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `小程序日志分析结果_${new Date().toLocaleDateString('zh-CN').replace(/\//g, '-')}.json`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
-}
 
