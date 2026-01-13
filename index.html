@@ -213,6 +213,9 @@
             .search-input:focus {
                 border-color: #7fbe25;
             }
+            textarea:focus {
+                border-color: #7fbe25;
+            }
             .search-input {
                 width: 200px;
             }
@@ -1106,7 +1109,14 @@
             </div>
 
             <div class="upload-section">
-                
+                <div style="display: flex; justify-content: center; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
+                    <button class="export-btn" onclick="importFromClipboard()" style="display: flex; align-items: center; gap: 8px;">
+                        📋 导入剪贴板
+                    </button>
+                    <button class="export-btn" onclick="showTextImportModal()" style="display: flex; align-items: center; gap: 8px;">
+                        📝 导入文本
+                    </button>
+                </div>
                 <div class="upload-area" id="uploadArea">
                     <label for="fileInput" class="upload-label">
                         <input type="file" id="fileInput" accept=".json" class="file-input-hidden" />
@@ -1227,6 +1237,27 @@
                             </label>
                         </div>
                         <div class="file-info" id="importFileInfo"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 导入文本弹窗 -->
+        <div id="textImportModal" class="detail-modal">
+            <div class="detail-modal-content">
+                <div class="detail-modal-header">
+                    <h3>📝 导入文本</h3>
+                    <span class="detail-modal-close" onclick="hideTextImportModal()">&times;</span>
+                </div>
+                <div class="detail-modal-body">
+                    <div style="margin-bottom: 15px;">
+                        <label for="textImportTextarea" style="display: block; margin-bottom: 8px; color: #333; font-weight: 500;">请输入或粘贴 JSON 数据：</label>
+                        <textarea id="textImportTextarea" style="width: 100%; min-height: 300px; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-family: 'Monaco', 'Menlo', monospace; font-size: 13px; line-height: 1.5; resize: vertical; outline: none; transition: border-color 0.3s;" placeholder='请输入 JSON 数据，支持单个对象或数组格式，例如：&#10;[{"line": "...", "timestamp": "..."}]&#10;或&#10;{"line": "...", "timestamp": "..."}'></textarea>
+                    </div>
+                    <div id="textImportInfo" class="file-info" style="display: none; margin-bottom: 15px;"></div>
+                    <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                        <button class="export-btn" onclick="hideTextImportModal()" style="background: #ccc; color: #333;">取消</button>
+                        <button class="export-btn" onclick="processTextImport()">确定</button>
                     </div>
                 </div>
             </div>

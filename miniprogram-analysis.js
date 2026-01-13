@@ -727,6 +727,385 @@ function processImportFile(file) {
     reader.readAsText(file)
 }
 
+// 通用的 JSON 数据处理函数（用于剪贴板和文本导入）
+function processJSONData(jsonText, sourceName = '数据') {
+    const fileInfo = document.getElementById('fileInfo')
+    
+    if (!fileInfo) {
+        console.error('fileInfo元素未初始化')
+        return false
+    }
+
+    // 检查文本是否为空
+    if (!jsonText || jsonText.trim() === '') {
+        fileInfo.style.display = 'block'
+        fileInfo.style.background = '#ffebee'
+        fileInfo.style.color = '#c62828'
+        fileInfo.textContent = `❌ ${sourceName}为空，请先输入 JSON 数据`
+        return false
+    }
+
+    // 验证并解析 JSON
+    let jsonData
+    try {
+        jsonData = JSON.parse(jsonText)
+    } catch (parseError) {
+        fileInfo.style.display = 'block'
+        fileInfo.style.background = '#ffebee'
+        fileInfo.style.color = '#c62828'
+        fileInfo.textContent = `❌ ${sourceName}不是有效的 JSON 格式: ${parseError.message}`
+        return false
+    }
+
+    // 如果解析结果是单个对象，将其包装成数组
+    if (!Array.isArray(jsonData)) {
+        if (typeof jsonData === 'object' && jsonData !== null) {
+            jsonData = [jsonData]
+        } else {
+            fileInfo.style.display = 'block'
+            fileInfo.style.background = '#ffebee'
+            fileInfo.style.color = '#c62828'
+            fileInfo.textContent = `❌ ${sourceName}格式不正确，请确保是 JSON 对象或数组`
+            return false
+        }
+    }
+
+    // 验证数组不为空
+    if (jsonData.length === 0) {
+        fileInfo.style.display = 'block'
+        fileInfo.style.background = '#ffebee'
+        fileInfo.style.color = '#c62828'
+        fileInfo.textContent = `❌ ${sourceName}为空数组，请确保包含日志数据`
+        return false
+    }
+
+    // 解析新数据
+    const newData = parseMiniprogramData(jsonData)
+    
+    if (newData.length === 0) {
+        fileInfo.style.display = 'block'
+        fileInfo.style.background = '#ffebee'
+        fileInfo.style.color = '#c62828'
+        fileInfo.textContent = `❌ ${sourceName}中没有有效的日志记录`
+        return false
+    }
+
+    // 合并数据：始终合并，保留现有数据
+    const existingDataCount = allData.length
+    
+    if (existingDataCount > 0) {
+        // 获取现有数据的最大序号
+        const maxIndex = Math.max(...allData.map(item => item.index || 0), 0)
+        
+        // 更新新数据的序号，从最大序号+1开始
+        newData.forEach((item, idx) => {
+            item.index = maxIndex + idx + 1
+        })
+        
+        // 合并数据，保留现有 sessionId 颜色映射
+        allData = [...allData, ...newData]
+        fileInfo.style.display = 'block'
+        fileInfo.style.background = '#e8f5e9'
+        fileInfo.style.color = '#2e7d32'
+        fileInfo.innerHTML = `✅ ${sourceName}导入成功 | 导入 <strong>${newData.length}</strong> 条记录 | 原有 <strong>${existingDataCount}</strong> 条 | 总计 <strong>${allData.length}</strong> 条记录`
+    } else {
+        // 首次导入（没有现有数据），重置颜色映射
+        sessionIdColorMap.clear()
+        nextColorIndex = 0
+        allData = [...newData]
+        fileInfo.style.display = 'block'
+        fileInfo.style.background = '#e8f5e9'
+        fileInfo.style.color = '#2e7d32'
+        fileInfo.innerHTML = `✅ ${sourceName}导入成功 | 共 <strong>${allData.length}</strong> 条记录`
+    }
+
+    // 更新事件筛选器
+    updateEventFilter()
+    
+    // 重置到第一页
+    currentPage = 1
+    
+    // 重新应用筛选
+    applyFilters()
+    
+    // 显示结果区域（如果之前隐藏）
+    if (resultSection) {
+        resultSection.style.display = 'block'
+    }
+
+    return true
+}
+
+// 处理剪贴板导入
+window.importFromClipboard = async function() {
+    const fileInfo = document.getElementById('fileInfo')
+    
+    if (!fileInfo) {
+        console.error('fileInfo元素未初始化')
+        return
+    }
+
+    // 检查 Clipboard API 是否可用
+    if (!navigator.clipboard || !navigator.clipboard.readText) {
+        fileInfo.style.display = 'block'
+        fileInfo.style.background = '#ffebee'
+        fileInfo.style.color = '#c62828'
+        fileInfo.textContent = '❌ 浏览器不支持剪贴板 API，请使用文件导入功能'
+        return
+    }
+
+    // 显示加载状态
+    fileInfo.style.display = 'block'
+    fileInfo.style.background = '#e3f2fd'
+    fileInfo.style.color = '#1565c0'
+    fileInfo.textContent = '正在读取剪贴板...'
+
+    try {
+        // 读取剪贴板内容
+        const clipboardText = await navigator.clipboard.readText()
+        
+        // 使用通用函数处理 JSON 数据
+        const success = processJSONData(clipboardText, '剪贴板内容')
+        if (!success) {
+            return
+        }
+
+    } catch (error) {
+        console.error('剪贴板导入错误:', error)
+        fileInfo.style.background = '#ffebee'
+        fileInfo.style.color = '#c62828'
+        
+        // 根据错误类型显示不同的错误消息
+        if (error.name === 'NotAllowedError' || error.name === 'SecurityError') {
+            fileInfo.textContent = '❌ 无法访问剪贴板，请检查浏览器权限设置或使用文件导入功能'
+        } else {
+            fileInfo.textContent = `❌ 剪贴板导入失败: ${error.message}`
+        }
+    }
+}
+
+// 显示文本导入模态框
+window.showTextImportModal = function() {
+    const textImportModal = document.getElementById('textImportModal')
+    const textImportTextarea = document.getElementById('textImportTextarea')
+    const textImportInfo = document.getElementById('textImportInfo')
+    
+    if (textImportModal) {
+        textImportModal.style.display = 'block'
+        
+        // 清空文本编辑框和错误信息
+        if (textImportTextarea) {
+            textImportTextarea.value = ''
+        }
+        if (textImportInfo) {
+            textImportInfo.style.display = 'none'
+            textImportInfo.textContent = ''
+        }
+        
+        // 设置关闭按钮事件
+        const closeBtn = textImportModal.querySelector('.detail-modal-close')
+        if (closeBtn) {
+            closeBtn.onclick = function() {
+                hideTextImportModal()
+            }
+        }
+        
+        // 点击背景关闭
+        textImportModal.onclick = function(event) {
+            if (event.target === textImportModal) {
+                hideTextImportModal()
+            }
+        }
+        
+        // 聚焦到文本编辑框
+        if (textImportTextarea) {
+            setTimeout(() => {
+                textImportTextarea.focus()
+            }, 100)
+        }
+    }
+}
+
+// 隐藏文本导入模态框
+window.hideTextImportModal = function() {
+    const textImportModal = document.getElementById('textImportModal')
+    if (textImportModal) {
+        textImportModal.style.display = 'none'
+        // 清空文本编辑框和错误信息
+        const textImportTextarea = document.getElementById('textImportTextarea')
+        const textImportInfo = document.getElementById('textImportInfo')
+        if (textImportTextarea) {
+            textImportTextarea.value = ''
+        }
+        if (textImportInfo) {
+            textImportInfo.style.display = 'none'
+            textImportInfo.textContent = ''
+        }
+    }
+}
+
+// 处理文本导入
+window.processTextImport = function() {
+    const textImportTextarea = document.getElementById('textImportTextarea')
+    const textImportInfo = document.getElementById('textImportInfo')
+    
+    if (!textImportTextarea) {
+        console.error('textImportTextarea元素未初始化')
+        return
+    }
+    
+    const textContent = textImportTextarea.value
+    
+    // 检查文本是否为空
+    if (!textContent || textContent.trim() === '') {
+        if (textImportInfo) {
+            textImportInfo.style.display = 'block'
+            textImportInfo.style.background = '#ffebee'
+            textImportInfo.style.color = '#c62828'
+            textImportInfo.textContent = '❌ 请输入 JSON 数据'
+        }
+        return
+    }
+    
+    // 显示处理中状态
+    if (textImportInfo) {
+        textImportInfo.style.display = 'block'
+        textImportInfo.style.background = '#e3f2fd'
+        textImportInfo.style.color = '#1565c0'
+        textImportInfo.textContent = '正在处理文本数据...'
+    }
+    
+    // 使用通用函数处理 JSON 数据（但使用模态框内的信息显示区域）
+    const fileInfo = document.getElementById('fileInfo')
+    const originalDisplay = fileInfo ? fileInfo.style.display : 'none'
+    
+    // 临时创建一个处理函数，使用模态框内的信息显示区域
+    function processTextJSONData(jsonText, sourceName = '文本内容') {
+        const infoElement = textImportInfo || fileInfo
+        
+        if (!infoElement) {
+            console.error('信息显示元素未初始化')
+            return false
+        }
+
+        // 检查文本是否为空
+        if (!jsonText || jsonText.trim() === '') {
+            infoElement.style.display = 'block'
+            infoElement.style.background = '#ffebee'
+            infoElement.style.color = '#c62828'
+            infoElement.textContent = `❌ ${sourceName}为空，请先输入 JSON 数据`
+            return false
+        }
+
+        // 验证并解析 JSON
+        let jsonData
+        try {
+            jsonData = JSON.parse(jsonText)
+        } catch (parseError) {
+            infoElement.style.display = 'block'
+            infoElement.style.background = '#ffebee'
+            infoElement.style.color = '#c62828'
+            infoElement.textContent = `❌ ${sourceName}不是有效的 JSON 格式: ${parseError.message}`
+            return false
+        }
+
+        // 如果解析结果是单个对象，将其包装成数组
+        if (!Array.isArray(jsonData)) {
+            if (typeof jsonData === 'object' && jsonData !== null) {
+                jsonData = [jsonData]
+            } else {
+                infoElement.style.display = 'block'
+                infoElement.style.background = '#ffebee'
+                infoElement.style.color = '#c62828'
+                infoElement.textContent = `❌ ${sourceName}格式不正确，请确保是 JSON 对象或数组`
+                return false
+            }
+        }
+
+        // 验证数组不为空
+        if (jsonData.length === 0) {
+            infoElement.style.display = 'block'
+            infoElement.style.background = '#ffebee'
+            infoElement.style.color = '#c62828'
+            infoElement.textContent = `❌ ${sourceName}为空数组，请确保包含日志数据`
+            return false
+        }
+
+        // 解析新数据
+        const newData = parseMiniprogramData(jsonData)
+        
+        if (newData.length === 0) {
+            infoElement.style.display = 'block'
+            infoElement.style.background = '#ffebee'
+            infoElement.style.color = '#c62828'
+            infoElement.textContent = `❌ ${sourceName}中没有有效的日志记录`
+            return false
+        }
+
+        // 合并数据：始终合并，保留现有数据
+        const existingDataCount = allData.length
+        
+        if (existingDataCount > 0) {
+            // 获取现有数据的最大序号
+            const maxIndex = Math.max(...allData.map(item => item.index || 0), 0)
+            
+            // 更新新数据的序号，从最大序号+1开始
+            newData.forEach((item, idx) => {
+                item.index = maxIndex + idx + 1
+            })
+            
+            // 合并数据，保留现有 sessionId 颜色映射
+            allData = [...allData, ...newData]
+            infoElement.style.display = 'block'
+            infoElement.style.background = '#e8f5e9'
+            infoElement.style.color = '#2e7d32'
+            infoElement.innerHTML = `✅ ${sourceName}导入成功 | 导入 <strong>${newData.length}</strong> 条记录 | 原有 <strong>${existingDataCount}</strong> 条 | 总计 <strong>${allData.length}</strong> 条记录`
+        } else {
+            // 首次导入（没有现有数据），重置颜色映射
+            sessionIdColorMap.clear()
+            nextColorIndex = 0
+            allData = [...newData]
+            infoElement.style.display = 'block'
+            infoElement.style.background = '#e8f5e9'
+            infoElement.style.color = '#2e7d32'
+            infoElement.innerHTML = `✅ ${sourceName}导入成功 | 共 <strong>${allData.length}</strong> 条记录`
+        }
+
+        // 更新事件筛选器
+        updateEventFilter()
+        
+        // 重置到第一页
+        currentPage = 1
+        
+        // 重新应用筛选
+        applyFilters()
+        
+        // 显示结果区域（如果之前隐藏）
+        if (resultSection) {
+            resultSection.style.display = 'block'
+        }
+
+        return true
+    }
+    
+    // 处理文本内容
+    const success = processTextJSONData(textContent, '文本内容')
+    
+    if (success) {
+        // 导入成功，延迟关闭模态框
+        setTimeout(() => {
+            hideTextImportModal()
+            // 在主页面显示成功消息
+            if (fileInfo) {
+                fileInfo.style.display = 'block'
+                fileInfo.style.background = '#e8f5e9'
+                fileInfo.style.color = '#2e7d32'
+                fileInfo.textContent = '✅ 文本导入成功'
+            }
+        }, 1500)
+    }
+}
+
 // 显示tooltip
 window.showTooltip = function(event, cell) {
     const tooltip = cell.querySelector('.properties-tooltip')

@@ -288,7 +288,12 @@ export function parseMiniprogramData(jsonData) {
     jsonData.forEach((record, index) => {
         try {
             // 解析 line 字段中的 JSON
-            const lineData = typeof record.line === 'string' ? JSON.parse(record.line) : record.line
+            let lineData = null
+            if (record.line) {
+                lineData = typeof record.line === 'string' ? JSON.parse(record.line) : record.line
+            } else {
+                lineData = typeof record === 'string' ? JSON.parse(record) : record
+            }
             // 提取时间
             let timeStr = ''
             let timestamp = 0
