@@ -277,8 +277,8 @@ function applyFilters() {
     filteredData.sort((a, b) => {
         if (sortOrder === 'calibratedTime') {
             // 按上报时间排序（正序）
-            const aTime = a.rawData?.analysisData?.calibratedTime
-            const bTime = b.rawData?.analysisData?.calibratedTime
+            const aTime = a.rawData?.analysisData?.calibratedTime || a.timestamp
+            const bTime = b.rawData?.analysisData?.calibratedTime || b.timestamp
             
             // 如果两个都有 calibratedTime，按时间排序
             if (aTime && bTime) {
@@ -375,6 +375,24 @@ function hexToRgba(hex, alpha = 0.2) {
     const g = parseInt(hex.slice(3, 5), 16)
     const b = parseInt(hex.slice(5, 7), 16)
     return `rgba(${r}, ${g}, ${b}, ${alpha})`
+}
+
+// 格式化 calibratedTime 为 YYYY/MM/DD HH:mm:ss.ms
+function formatCalibratedTime(timestamp) {
+    if (!timestamp) return ''
+    
+    const date = new Date(typeof timestamp === 'number' ? timestamp : Number(timestamp))
+    if (isNaN(date.getTime())) return ''
+    
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    const hours = String(date.getHours()).padStart(2, '0')
+    const minutes = String(date.getMinutes()).padStart(2, '0')
+    const seconds = String(date.getSeconds()).padStart(2, '0')
+    const ms = String(date.getMilliseconds()).padStart(3, '0')
+    
+    return `${year}/${month}/${day} ${hours}:${minutes}:${seconds}.${ms}`
 }
 
 // 渲染表格
@@ -477,9 +495,16 @@ function renderTable() {
             const rawJson = escapeHtml(JSON.stringify(item.rawData || {}, null, 2))
             const rawCopy = encodeURIComponent(JSON.stringify(item.rawData || {}, null, 2))
 
+            // 格式化 calibratedTime 显示
+            const calibratedTime = item.rawData?.analysisData?.calibratedTime
+            const formattedCalibratedTime = formatCalibratedTime(calibratedTime)
+            const timeCellContent = formattedCalibratedTime 
+                ? `<div>${item.time || '-'}</div><div style="font-size: 13px; color: #67c23a; margin-top: 2px;">${formattedCalibratedTime}</div>`
+                : item.time || '-'
+
             return `
         <tr class="${rowClass}">
-            <td class="time-cell">${item.time || '-'}</td>
+            <td class="time-cell">${timeCellContent}</td>
             <td class="${isError ? 'event-error' : ''}">
                 ${eventNameContent}
             </td>
