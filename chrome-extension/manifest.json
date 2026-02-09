@@ -5,7 +5,8 @@
   "description": "从 Grafana Explore 页面一键导出 Loki 日志到日志分析工具",
   "permissions": ["storage"],
   "host_permissions": [
-    "https://grafana.xkdevops.com/*"
+    "https://grafana.xkdevops.com/*",
+    "https://zxl-log-analysis.vercel.app/*"
   ],
   "background": {
     "service_worker": "background.js"

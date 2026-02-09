@@ -1231,7 +1231,7 @@ window.executeQueryLog = function () {
 
   // 构建URL
   const baseUrl =
-    "https://grafana.xkdevops.com/explore?schemaVersion=1&panes=%7B%22fk0%22:%7B%22datasource%22:%22cezf9yu571vcwc%22,%22queries%22:%5B%7B%22refId%22:%22A%22,%22expr%22:%22%7Bapp%3D%5C%22miniprogram-api%5C%22%7D%20%7C%3D%20%60XXXXXX%60%22,%22queryType%22:%22range%22,%22datasource%22:%7B%22type%22:%22loki%22,%22uid%22:%22cezf9yu571vcwc%22%7D,%22editorMode%22:%22builder%22%7D,%7B%22refId%22:%22B%22,%22expr%22:%22%7Bapp%3D%5C%22report-api%5C%22%7D%20%7C%3D%20%60XXXXXX%60%22,%22queryType%22:%22range%22,%22datasource%22:%7B%22type%22:%22loki%22,%22uid%22:%22cezf9yu571vcwc%22%7D,%22editorMode%22:%22builder%22%7D%5D,%22range%22:%7B%22from%22:%22timeA%22,%22to%22:%22timeB%22%7D%7D%7D";
+    "https://grafana.xkdevops.com/explore?schemaVersion=1&panes=%7B%22fk0%22:%7B%22datasource%22:%22cezf9yu571vcwc%22,%22queries%22:%5B%7B%22refId%22:%22A%22,%22expr%22:%22%7Bapp%3D%5C%22miniprogram-api%5C%22%7D%20%7C~%20%60XXXXXX%60%22,%22queryType%22:%22range%22,%22datasource%22:%7B%22type%22:%22loki%22,%22uid%22:%22cezf9yu571vcwc%22%7D,%22editorMode%22:%22builder%22%7D,%7B%22refId%22:%22B%22,%22expr%22:%22%7Bapp%3D%5C%22report-api%5C%22%7D%20%7C~%20%60XXXXXX%60%22,%22queryType%22:%22range%22,%22datasource%22:%7B%22type%22:%22loki%22,%22uid%22:%22cezf9yu571vcwc%22%7D,%22editorMode%22:%22builder%22%7D%5D,%22range%22:%7B%22from%22:%22timeA%22,%22to%22:%22timeB%22%7D%7D%7D";
 
   // 编码关键词
   const encodedKeyword = encodeURIComponent(keyword);
