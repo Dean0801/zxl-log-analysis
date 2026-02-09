@@ -104,13 +104,17 @@ function init() {
     sortOrderSelect.value = sortOrder; // 设置默认值
   }
 
-  // 监听来自浏览器插件的日志数据
-  document.addEventListener("extension-log-data", (event) => {
-    if (event.detail && Array.isArray(event.detail)) {
+  // 监听来自浏览器插件的日志数据（通过 postMessage，兼容 CSP 限制）
+  window.addEventListener("message", (event) => {
+    if (
+      event.data &&
+      event.data.type === "grafana-log-exporter-data" &&
+      Array.isArray(event.data.logs)
+    ) {
       console.log(
-        `📦 收到浏览器插件推送的 ${event.detail.length} 条日志数据`
+        `📦 收到浏览器插件推送的 ${event.data.logs.length} 条日志数据`
       );
-      processJSONData(JSON.stringify(event.detail), "浏览器插件导入");
+      processJSONData(JSON.stringify(event.data.logs), "浏览器插件导入");
     }
   });
 

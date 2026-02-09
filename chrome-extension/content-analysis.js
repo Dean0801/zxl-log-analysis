@@ -85,27 +85,20 @@
   }
 
   /**
-   * 向页面注入数据，触发分析工具的导入逻辑
+   * 向页面传递数据，触发分析工具的导入逻辑
+   * 使用 window.postMessage 代替内联 script 注入，避免被 CSP 阻止
    */
   function injectData(logs) {
-    // 通过 CustomEvent 传递数据给页面的 JS
-    // 页面的 miniprogram-analysis.js 需要监听此事件
-    const script = document.createElement("script");
-    script.textContent = `
-      (function() {
-        try {
-          var data = ${JSON.stringify(logs)};
-          document.dispatchEvent(new CustomEvent('extension-log-data', {
-            detail: data
-          }));
-          console.log('[Grafana Log Exporter] 已注入 ' + data.length + ' 条日志数据到页面');
-        } catch(e) {
-          console.error('[Grafana Log Exporter] 注入数据失败:', e);
-        }
-      })();
-    `;
-    document.documentElement.appendChild(script);
-    script.remove();
+    window.postMessage(
+      {
+        type: "grafana-log-exporter-data",
+        logs: logs,
+      },
+      "*"
+    );
+    console.log(
+      `[Grafana Log Exporter] 已通过 postMessage 发送 ${logs.length} 条日志到页面`
+    );
   }
 
   // 入口：仅当从插件跳转时才加载数据
